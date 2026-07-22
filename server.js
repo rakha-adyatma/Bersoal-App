@@ -44,6 +44,11 @@ app.post("/generate", async (req, res) => {
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
                 <script src="https://cdn.tailwindcss.com"></script>
                 <style> body { font-family: 'Inter', sans-serif; } </style>
+                <!-- Vercel Web Analytics -->
+                <script>
+                    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+                </script>
+                <script defer src="/_vercel/insights/script.js"></script>
             </head>
             <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4 md:p-8">
                 
@@ -105,6 +110,11 @@ app.post("/generate", async (req, res) => {
                 <title>Error - BERSOAL</title>
                 <script src="https://cdn.tailwindcss.com"></script>
                 <style> body { font-family: sans-serif; } </style>
+                <!-- Vercel Web Analytics -->
+                <script>
+                    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+                </script>
+                <script defer src="/_vercel/insights/script.js"></script>
             </head>
             <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
                 <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl max-w-md w-full text-center border-t-4 border-red-500">
