@@ -3,37 +3,37 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const JENIS_VALID = ["Pilihan Ganda", "Uraian"];
 
-// Prompt Sistem yang jauh lebih kompleks dan terstruktur
-const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan dan Pembuat Instrumen Soal tingkat SMA/SMK di Indonesia. 
-Keahlian utama Anda adalah menyusun soal berbasis HOTS (Higher Order Thinking Skills - Taksonomi Bloom level C4 Menganalisis, C5 Mengevaluasi, C6 Mencipta).
+// Prompt Sistem - Paradigma Deep Learning Kemendikdasmen & Konteks Nyata
+const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan dan Pembuat Instrumen Asesmen tingkat SMA/SMK di Indonesia. 
+Keahlian utama Anda adalah menyusun instrumen evaluasi HOTS (C4-Menganalisis, C5-Mengevaluasi, C6-Mencipta) yang selaras dengan paradigma Deep Learning (Pembelajaran Mendalam) dari Kemendikdasmen.
 
-ATURAN MUTLAK PEMBUATAN SOAL:
-1. WAJIB BERBASIS STIMULUS: Setiap soal HARUS diawali dengan stimulus (konteks masalah). 
-   - Untuk Bahasa: Gunakan kutipan teks sastra/artikel/percakapan faktual.
-   - Untuk Informatika: Gunakan studi kasus sistem, pseudocode, cuplikan kode error, atau skenario logika algoritma.
-2. DILARANG MEMBUAT SOAL HAFALAN (C1-C3) seperti "Apa pengertian dari..." atau "Sebutkan...". Pertanyaan harus menuntut penalaran, pemecahan masalah, atau evaluasi dari stimulus yang diberikan.
-3. DISTRAKTOR LOGIS (Untuk Pilihan Ganda): Opsi jawaban salah (pengecoh) tidak boleh asal-asalan. Distraktor harus berupa jawaban yang mungkin dipilih siswa jika mereka mengalami miskonsepsi atau kesalahan logika/perhitungan.
-4. PEMBAHASAN MENDALAM: Jelaskan mengapa jawaban benar itu benar, dan mengapa opsi lain salah.
+ATURAN MUTLAK PENYUSUNAN SOAL:
+1. Bermakna, Kontekstual & Realistis (Meaningful Learning): Setiap soal WAJIB diawali dengan stimulus. Stimulus harus berupa situasi dunia nyata yang sangat dekat dan relevan dengan keseharian siswa remaja masa kini (Gen Z). Jika menggunakan karya sastra atau artikel jurnalistik, WAJIB menggunakan karya faktual/nyata dan MENCANTUMKAN atribusinya (Judul, Penulis, Tahun Terbit) di dalam stimulus.
+2. Menalar & Kritis (Mindful Learning): DILARANG keras membuat soal hafalan (C1-C3). Pertanyaan harus menantang siswa untuk menguraikan masalah, mengevaluasi solusi, atau mensintesis ide baru berdasarkan stimulus.
+3. Eksploratif & Menggugah (Joyful Learning): Kemas narasi soal agar menarik, tidak mengintimidasi, dan memicu rasa ingin tahu siswa layaknya memecahkan sebuah tantangan riil.
+4. Distraktor Psikometrik: Opsi jawaban salah (pengecoh) HARUS mencerminkan miskonsepsi umum atau kesalahan logika yang paling sering dialami siswa.
+5. Pembahasan Reflektif: Berikan penjelasan mengapa jawaban tersebut benar secara konsep, dan uraikan letak kesalahan pada opsi lainnya secara edukatif.
 
-ATURAN FORMAT (SANGAT PENTING):
-- Output HANYA boleh berupa JSON murni yang valid.
-- JANGAN sertakan markdown backticks (seperti \`\`\`json) di awal atau akhir.
-- JANGAN gunakan karakter newline asli (Enter) di dalam string nilai JSON, gunakan \\n jika perlu pemisah baris di dalam teks stimulus/opsi.`;
+ATURAN FORMAT OUTPUT:
+- Jawab HANYA menggunakan struktur JSON murni yang valid.
+- Dilarang menggunakan backticks markdown (seperti \`\`\`json).
+- Dilarang menggunakan enter (newline) asli di dalam nilai string; gunakan "\\n".`;
 
 function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
-  // Instruksi spesifik menyesuaikan mapel
   let spesifikMapel = "";
   if (mataPelajaran === "Informatika") {
-    spesifikMapel = "Pastikan stimulus berupa skenario komputasional, pseudocode, arsitektur jaringan, atau kasus troubleshooting algoritma.";
+    spesifikMapel = "Hadirkan stimulus berupa tantangan sistem yang ada di lingkungan siswa (misal: algoritma media sosial, keamanan jaringan Wi-Fi, error kode pada tugas, IoT di sekolah). Uji logika komputasional, troubleshooting, dan dampaknya, bukan hafalan sintaks.";
   } else if (mataPelajaran === "Bahasa Inggris") {
-    spesifikMapel = "Stimulus dan pertanyaan WAJIB dalam Bahasa Inggris (English Language). Uji pemahaman tersirat (implied meaning), inferensi, dan evaluasi argumen.";
+    spesifikMapel = "Stimulus dan pertanyaan WAJIB dalam Bahasa Inggris. Uji pemahaman tersirat (implied meaning) dan evaluasi argumen. WAJIB menggunakan kutipan karya sastra/artikel jurnalistik berbahasa Inggris NYATA (cantumkan Title, Author, Year di teks) atau skenario percakapan otentik siswa.";
   } else {
-    spesifikMapel = "Stimulus gunakan bahasa Indonesia yang baku. Fokus pada literasi membaca, evaluasi opini, atau analisis struktur teks secara kritis.";
+    spesifikMapel = "Fokus pada literasi membaca dan berpikir kritis. WAJIB menggunakan kutipan karya sastra/teks otentik Indonesia NYATA (cantumkan Judul, Penulis, Tahun di dalam teks) atau fenomena/isu sosial kontemporer yang relevan dengan remaja.";
   }
 
-  return `Buat ${jumlahSoal} soal HOTS dengan format ${jenisSoal} untuk Mata Pelajaran: ${mataPelajaran}.
+  return `Buat ${jumlahSoal} butir soal ${jenisSoal} level HOTS untuk Mata Pelajaran: ${mataPelajaran}.
 Konteks / Capaian Pembelajaran: ${deskripsi}
-Instruksi Tambahan: ${spesifikMapel}
+
+INSTRUKSI SPESIFIK MATA PELAJARAN:
+${spesifikMapel}
 
 Struktur JSON yang WAJIB dipatuhi:
 {
@@ -44,14 +44,14 @@ Struktur JSON yang WAJIB dipatuhi:
     {
       "nomor": 1,
       "levelBloom": "C4/C5/C6",
-      "pertanyaan": "[STIMULUS KASUS] \\n\\n [PERTANYAAN ANALITIS]",
+      "pertanyaan": "[STIMULUS KASUS RIIL ATAU KUTIPAN KARYA NYATA BESERTA SUMBERNYA] \\n\\n [PERTANYAAN PENALARAN]",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
     }
   ]
 }
-Catatan: Jika jenis soal adalah "Uraian", biarkan object "opsi" tetap ada namun bernilai string kosong atau hapus key "opsi", lalu tuliskan rubrik penilaian pada "jawabanBenar".`;
+Catatan Penting: Jika jenis soal "Uraian", tetap sediakan key "opsi" namun kosongkan (""), lalu berikan rubrik penilaian pada "jawabanBenar".`;
 }
 
 function repairJsonBackslashes(text) {
@@ -86,7 +86,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
-        maxOutputTokens: 8192, // Diperbesar karena output soal yang kompleks butuh token panjang
+        maxOutputTokens: 8192, 
         temperature: 0.7, 
       },
     });
@@ -111,7 +111,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
   }
 
   if (!parsed) {
-    throw new Error("Sistem AI gagal mengonstruksi struktur JSON yang valid. Silakan coba klik tombol buat soal sekali lagi.");
+    throw new Error("Sistem AI gagal memproses output JSON dengan tepat. Mohon klik tombol buat soal sekali lagi.");
   }
 
   parsed.judul = parsed.judul || judulSoal;
