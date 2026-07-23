@@ -19,7 +19,7 @@ ATURAN FORMAT OUTPUT:
 - Dilarang menggunakan backticks markdown (seperti \`\`\`json).
 - Dilarang menggunakan enter (newline) asli di dalam nilai string; gunakan "\\n".`;
 
-function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
+function buildUserPrompt(mataPelajaran, deskripsi, jenisSoal, batchSize) {
   let spesifikMapel = "";
   if (mataPelajaran === "Informatika") {
     spesifikMapel = "Stimulus berupa kasus IT sehari-hari siswa (algoritma sosmed, jaringan Wi-Fi, error kode, IoT). Uji logika komputasional/troubleshooting.";
@@ -33,26 +33,19 @@ function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumla
 Konteks: ${deskripsi}
 Instruksi Tambahan: ${spesifikMapel}
 
-PERINGATAN KERAS JUMLAH SOAL:
-Anda WAJIB menghasilkan TEPAT ${jumlahSoal} soal. JANGAN PERNAH berhenti, memotong, atau merangkum output sebelum soal ke-${jumlahSoal} selesai ditulis beserta pembahasannya!
+PERINGATAN KERAS: Buat TEPAT ${batchSize} soal. JANGAN KURANG DAN JANGAN LEBIH!
 
-Buat ${jumlahSoal} soal ${jenisSoal} dalam struktur JSON berikut:
+Buat ${batchSize} soal ${jenisSoal} dalam struktur JSON berikut:
 {
-  "judul": "${judulSoal}",
-  "mataPelajaran": "${mataPelajaran}",
-  "jenisSoal": "${jenisSoal}",
   "soal": [
     {
-      "nomor": 1,
-      "levelBloom": "C4/C5/C6",
       "pertanyaan": "[STIMULUS NYATA/KUTIPAN BESERTA SUMBER] \\n\\n [PERTANYAAN NALAR]",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
     }
   ]
-}
-Catatan Penting: Jika jenis soal "Uraian", tetap sediakan key "opsi" namun kosongkan (""), lalu berikan rubrik penilaian pada "jawabanBenar".`;
+}`;
 }
 
 function repairJsonBackslashes(text) {
@@ -71,55 +64,86 @@ function parseGeminiJson(raw) {
   }
 }
 
-// Menggunakan flash-lite jika tersedia untuk kecepatan ekstra, fallback ke flash-latest
 const MODELS = ["gemini-3.1-flash-lite", "gemini-flash-latest"];
 
 async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
-  judulSoal = String(judulSoal || "").trim();
+  judulSoal = String(judulSoal || "Evaluasi HOTS").trim();
   deskripsi = String(deskripsi || "").trim();
-  jenisSoal = String(jenisSoal || "").trim();
-  mataPelajaran = String(mataPelajaran || "").trim();
-  jumlahSoal = Number(jumlahSoal);
+  jenisSoal = String(jenisSoal || "Pilihan Ganda").trim();
+  mataPelajaran = String(mataPelajaran || "Umum").trim();
+  const totalSoal = Number(jumlahSoal);
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const makeModel = (name) =>
-    genAI.getGenerativeModel({
-      model: name,
-      systemInstruction: SYSTEM_PROMPT,
-      generationConfig: {
-        responseMimeType: "application/json",
-        maxOutputTokens: 8192, 
-        temperature: 0.7, 
-      },
-    });
 
-  const prompt = buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal });
+  // KUNCI PERBAIKAN: Memecah jumlah soal menjadi kloter (batch) maksimal 8 soal per proses AI
+  // agar AI tidak kehabisan memori token (Max Output Tokens).
+  const MAX_PER_BATCH = 8;
+  const batches = [];
+  let sisa = totalSoal;
+  while (sisa > 0) {
+    batches.push(Math.min(sisa, MAX_PER_BATCH));
+    sisa -= MAX_PER_BATCH;
+  }
 
-  let parsed = null;
-  outer: for (const name of MODELS) {
-    const model = makeModel(name);
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const result = await model.generateContent(prompt);
-        parsed = parseGeminiJson(result.response.text());
-        if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) {
-          break outer;
+  // Fungsi untuk menjalankan 1 kloter (batch)
+  const fetchBatch = async (batchSize) => {
+    const prompt = buildUserPrompt(mataPelajaran, deskripsi, jenisSoal, batchSize);
+    let parsed = null;
+
+    outer: for (const name of MODELS) {
+      const model = genAI.getGenerativeModel({
+        model: name,
+        systemInstruction: SYSTEM_PROMPT,
+        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 },
+      });
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const result = await model.generateContent(prompt);
+          parsed = parseGeminiJson(result.response.text());
+          if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) {
+            break outer; // Jika berhasil, keluar dari loop
+          }
+          parsed = null;
+        } catch (e) {
+          parsed = null;
         }
-        parsed = null;
-      } catch (e) {
-        parsed = null;
       }
     }
-  }
 
-  if (!parsed) {
-    throw new Error("Waktu AI habis atau AI gagal mengonstruksi JSON sesuai format. Mohon kurangi jumlah soal (misal: 10 soal) dan coba lagi.");
-  }
+    if (!parsed || !parsed.soal) {
+      throw new Error("Gagal memproses batch soal.");
+    }
+    return parsed.soal;
+  };
 
-  parsed.judul = parsed.judul || judulSoal;
-  parsed.mataPelajaran = parsed.mataPelajaran || mataPelajaran;
-  parsed.jenisSoal = parsed.jenisSoal || jenisSoal;
-  return parsed;
+  try {
+    // Menjalankan semua kloter secara BERSAMAAN (Paralel) agar cepat
+    const results = await Promise.all(batches.map(size => fetchBatch(size)));
+    
+    // Menggabungkan kembali semua kloter soal menjadi satu daftar panjang
+    let semuaSoal = [];
+    results.forEach(arr => {
+      semuaSoal = semuaSoal.concat(arr);
+    });
+
+    // Merapikan nomor urut 1 sampai 25
+    semuaSoal = semuaSoal.slice(0, totalSoal); // Pastikan jumlahnya tepat
+    semuaSoal.forEach((item, index) => {
+      item.nomor = index + 1;
+      item.levelBloom = item.levelBloom || "C4/C5/C6";
+    });
+
+    return {
+      judul: judulSoal,
+      mataPelajaran: mataPelajaran,
+      jenisSoal: jenisSoal,
+      soal: semuaSoal
+    };
+
+  } catch (error) {
+    throw new Error("Sistem AI gagal memproses keseluruhan soal. Silakan coba lagi.");
+  }
 }
 
 module.exports = { generateHotsQuestions, JENIS_VALID };
