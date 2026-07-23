@@ -22,7 +22,8 @@
     <aside id="sidebar" class="w-64 bg-[#4f46e5] text-white flex-col h-full shadow-2xl z-40 fixed md:relative hidden md:flex transition-all">
         <!-- Logo Area -->
         <div class="h-20 flex items-center px-6 border-b border-white/10">
-            <img src="/public/logo.png" alt="Logo BERSOAL" class="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md mr-3">
+            <!-- DIPERBAIKI: src="/logo.png" -->
+            <img src="/logo.png" alt="Logo BERSOAL" class="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md mr-3">
             <div>
                 <h1 class="text-xl font-bold tracking-wide">Bersoal</h1>
                 <p class="text-[10px] text-indigo-200 tracking-wider font-semibold">EVALUASI PEMBELAJARAN</p>
@@ -52,14 +53,14 @@
                 <button onclick="toggleSidebar()" class="bg-indigo-600 text-white rounded-lg p-2 hover:bg-indigo-700 active:scale-95 transition-all shadow-sm cursor-pointer z-50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <img src="/public/logo.png" alt="Logo" class="h-8 w-auto md:hidden rounded-md bg-white p-1 shadow-sm border border-slate-100">
+                <!-- DIPERBAIKI: src="/logo.png" -->
+                <img src="/logo.png" alt="Logo" class="h-8 w-auto md:hidden rounded-md bg-white p-1 shadow-sm border border-slate-100">
                 <h1 class="text-lg font-bold text-slate-800 md:hidden">Bersoal</h1>
             </div>
 
             <!-- Header Title Desktop -->
             <div class="hidden md:block">
-                <h2 class="text-slate-600 font-semibold text-sm">Home
-                </h2>
+                <h2 class="text-slate-600 font-semibold text-sm">Home</h2>
             </div>
         </header>
 
@@ -69,7 +70,7 @@
                 <!-- FORM CARD -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     
-                    <!-- Header Form Profesional (Pengganti Banner Ungu) -->
+                    <!-- Header Form Profesional -->
                     <div class="px-6 py-6 sm:px-10 sm:py-8 border-b border-slate-200 bg-slate-50/50 flex flex-col gap-1">
                         <div class="flex items-center gap-3 mb-1">
                             <div class="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
@@ -199,7 +200,6 @@
     </div>
 
 <script>
-    // FUNGSI UNTUK MEMBUKA/MENUTUP SIDEBAR
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebarBackdrop');
