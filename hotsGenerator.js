@@ -3,19 +3,39 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const JENIS_VALID = ["Pilihan Ganda", "Uraian"];
 
-// Prompt Sistem yang sudah digeneralisasikan
-const SYSTEM_PROMPT = `Kamu adalah pembuat soal HOTS (Taksonomi Bloom C4-C6) profesional untuk pendidikan SMA/SMK Indonesia.
-Aturan:
-1. Buat soal sesuai mata pelajaran dan materi yang diminta.
-2. Gunakan VARIASI bentuk soal: sebagian memakai kutipan literatur/teks stimulus/berita ASLI dengan sumber jelas (dilarang mengarang teks/kutipan), sebagian berupa pertanyaan analitis konseptual langsung.
-3. Jawab HANYA JSON murni valid tanpa markdown backticks atau newline asli di dalam string.`;
+// Prompt Sistem yang jauh lebih kompleks dan terstruktur
+const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan dan Pembuat Instrumen Soal tingkat SMA/SMK di Indonesia. 
+Keahlian utama Anda adalah menyusun soal berbasis HOTS (Higher Order Thinking Skills - Taksonomi Bloom level C4 Menganalisis, C5 Mengevaluasi, C6 Mencipta).
+
+ATURAN MUTLAK PEMBUATAN SOAL:
+1. WAJIB BERBASIS STIMULUS: Setiap soal HARUS diawali dengan stimulus (konteks masalah). 
+   - Untuk Bahasa: Gunakan kutipan teks sastra/artikel/percakapan faktual.
+   - Untuk Informatika: Gunakan studi kasus sistem, pseudocode, cuplikan kode error, atau skenario logika algoritma.
+2. DILARANG MEMBUAT SOAL HAFALAN (C1-C3) seperti "Apa pengertian dari..." atau "Sebutkan...". Pertanyaan harus menuntut penalaran, pemecahan masalah, atau evaluasi dari stimulus yang diberikan.
+3. DISTRAKTOR LOGIS (Untuk Pilihan Ganda): Opsi jawaban salah (pengecoh) tidak boleh asal-asalan. Distraktor harus berupa jawaban yang mungkin dipilih siswa jika mereka mengalami miskonsepsi atau kesalahan logika/perhitungan.
+4. PEMBAHASAN MENDALAM: Jelaskan mengapa jawaban benar itu benar, dan mengapa opsi lain salah.
+
+ATURAN FORMAT (SANGAT PENTING):
+- Output HANYA boleh berupa JSON murni yang valid.
+- JANGAN sertakan markdown backticks (seperti \`\`\`json) di awal atau akhir.
+- JANGAN gunakan karakter newline asli (Enter) di dalam string nilai JSON, gunakan \\n jika perlu pemisah baris di dalam teks stimulus/opsi.`;
 
 function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
-  // AI otomatis menggunakan bahasa yang sesuai mata pelajaran berdasarkan data ini
-  return `Buat ${jumlahSoal} soal HOTS ${jenisSoal} Mata Pelajaran ${mataPelajaran}.
-Materi/Konteks: ${deskripsi}
+  // Instruksi spesifik menyesuaikan mapel
+  let spesifikMapel = "";
+  if (mataPelajaran === "Informatika") {
+    spesifikMapel = "Pastikan stimulus berupa skenario komputasional, pseudocode, arsitektur jaringan, atau kasus troubleshooting algoritma.";
+  } else if (mataPelajaran === "Bahasa Inggris") {
+    spesifikMapel = "Stimulus dan pertanyaan WAJIB dalam Bahasa Inggris (English Language). Uji pemahaman tersirat (implied meaning), inferensi, dan evaluasi argumen.";
+  } else {
+    spesifikMapel = "Stimulus gunakan bahasa Indonesia yang baku. Fokus pada literasi membaca, evaluasi opini, atau analisis struktur teks secara kritis.";
+  }
 
-Format JSON wajib:
+  return `Buat ${jumlahSoal} soal HOTS dengan format ${jenisSoal} untuk Mata Pelajaran: ${mataPelajaran}.
+Konteks / Capaian Pembelajaran: ${deskripsi}
+Instruksi Tambahan: ${spesifikMapel}
+
+Struktur JSON yang WAJIB dipatuhi:
 {
   "judul": "${judulSoal}",
   "mataPelajaran": "${mataPelajaran}",
@@ -23,14 +43,15 @@ Format JSON wajib:
   "soal": [
     {
       "nomor": 1,
-      "levelBloom": "C4",
-      "pertanyaan": "...",
+      "levelBloom": "C4/C5/C6",
+      "pertanyaan": "[STIMULUS KASUS] \\n\\n [PERTANYAAN ANALITIS]",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
     }
   ]
-}`;
+}
+Catatan: Jika jenis soal adalah "Uraian", biarkan object "opsi" tetap ada namun bernilai string kosong atau hapus key "opsi", lalu tuliskan rubrik penilaian pada "jawabanBenar".`;
 }
 
 function repairJsonBackslashes(text) {
@@ -65,7 +86,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
-        maxOutputTokens: 4096, 
+        maxOutputTokens: 8192, // Diperbesar karena output soal yang kompleks butuh token panjang
         temperature: 0.7, 
       },
     });
@@ -90,7 +111,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
   }
 
   if (!parsed) {
-    throw new Error("Gemini gagal menghasilkan soal yang valid. Coba lagi.");
+    throw new Error("Sistem AI gagal mengonstruksi struktur JSON yang valid. Silakan coba klik tombol buat soal sekali lagi.");
   }
 
   parsed.judul = parsed.judul || judulSoal;
