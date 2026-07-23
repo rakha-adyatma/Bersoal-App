@@ -3,19 +3,22 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const JENIS_VALID = ["Pilihan Ganda", "Uraian"];
 
-const SYSTEM_PROMPT = `Pembuat soal HOTS Bahasa Indonesia SMA/SMK (Taksonomi Bloom C4-C6: Analisis, Evaluasi, Kreasi).
+// Prompt Sistem yang sudah digeneralisasikan
+const SYSTEM_PROMPT = `Kamu adalah pembuat soal HOTS (Taksonomi Bloom C4-C6) profesional untuk pendidikan SMA/SMK Indonesia.
 Aturan:
-1. Variasikan bentuk soal: sebagian memakai kutipan sastra/berita ASLI dengan sumber jelas (dilarang mengarang kutipan), sebagian lagi berupa pertanyaan analitis konseptual tanpa teks panjang.
-2. Output HANYA JSON murni valid tanpa markdown backticks atau newline asli di dalam string (gunakan \\n untuk baris baru).`;
+1. Buat soal sesuai mata pelajaran dan materi yang diminta.
+2. Gunakan VARIASI bentuk soal: sebagian memakai kutipan literatur/teks stimulus/berita ASLI dengan sumber jelas (dilarang mengarang teks/kutipan), sebagian berupa pertanyaan analitis konseptual langsung.
+3. Jawab HANYA JSON murni valid tanpa markdown backticks atau newline asli di dalam string.`;
 
-function buildUserPrompt({ judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
-  return `Buat ${jumlahSoal} soal HOTS ${jenisSoal} Bahasa Indonesia.
-Materi: ${deskripsi}
+function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
+  // AI otomatis menggunakan bahasa yang sesuai mata pelajaran berdasarkan data ini
+  return `Buat ${jumlahSoal} soal HOTS ${jenisSoal} Mata Pelajaran ${mataPelajaran}.
+Materi/Konteks: ${deskripsi}
 
 Format JSON wajib:
 {
   "judul": "${judulSoal}",
-  "mataPelajaran": "Bahasa Indonesia",
+  "mataPelajaran": "${mataPelajaran}",
   "jenisSoal": "${jenisSoal}",
   "soal": [
     {
@@ -48,10 +51,11 @@ function parseGeminiJson(raw) {
 
 const MODELS = ["gemini-flash-latest", "gemini-3.1-flash-lite"];
 
-async function generateHotsQuestions({ judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
+async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
   judulSoal = String(judulSoal || "").trim();
   deskripsi = String(deskripsi || "").trim();
   jenisSoal = String(jenisSoal || "").trim();
+  mataPelajaran = String(mataPelajaran || "").trim();
   jumlahSoal = Number(jumlahSoal);
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -61,12 +65,12 @@ async function generateHotsQuestions({ judulSoal, deskripsi, jenisSoal, jumlahSo
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
         responseMimeType: "application/json",
-        maxOutputTokens: 4096, // Diturunkan dari 8192 untuk menghemat batas output
+        maxOutputTokens: 4096, 
         temperature: 0.7, 
       },
     });
 
-  const prompt = buildUserPrompt({ judulSoal, deskripsi, jenisSoal, jumlahSoal });
+  const prompt = buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal });
 
   let parsed = null;
   outer: for (const name of MODELS) {
@@ -90,7 +94,7 @@ async function generateHotsQuestions({ judulSoal, deskripsi, jenisSoal, jumlahSo
   }
 
   parsed.judul = parsed.judul || judulSoal;
-  parsed.mataPelajaran = "Bahasa Indonesia";
+  parsed.mataPelajaran = parsed.mataPelajaran || mataPelajaran;
   parsed.jenisSoal = parsed.jenisSoal || jenisSoal;
   return parsed;
 }

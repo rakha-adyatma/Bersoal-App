@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>BERSOAL - Generator Soal HOTS</title>
+    <title>BERSOAL - Generator Soal HOTS AI</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,7 +23,7 @@
                 <img src="/logo.png" alt="Logo BERSOAL" class="h-12 sm:h-16 w-auto object-contain rounded-xl bg-white/95 p-1.5 shadow-md mb-2 sm:mb-3">
                 
                 <h1 class="text-lg sm:text-2xl font-bold text-white tracking-tight">Generator Soal HOTS</h1>
-                <p class="text-indigo-100 text-xs sm:text-sm mt-0.5 font-medium">Asisten AI Khusus Literasi & Bahasa Indonesia</p>
+                <p class="text-indigo-100 text-xs sm:text-sm mt-0.5 font-medium">Asisten AI Khusus Literasi & Bahasa Indonesia/Inggris</p>
             </div>
         </div>
 
@@ -32,13 +32,15 @@
             
             <!-- Mata Pelajaran -->
             <div>
-                <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">Mata Pelajaran</label>
-                <input type="hidden" name="mataPelajaran" value="Bahasa Indonesia">
+                <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">Pilih Mata Pelajaran</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <span class="text-slate-400 text-sm">📚</span>
                     </div>
-                    <input type="text" value="Bahasa Indonesia" disabled class="w-full pl-9 pr-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-semibold cursor-not-allowed">
+                    <select id="mataPelajaran" name="mataPelajaran" onchange="updateMateri()" class="w-full pl-9 pr-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-indigo-500 bg-white font-semibold">
+                        <option value="Bahasa Indonesia" selected>Bahasa Indonesia</option>
+                        <option value="Bahasa Inggris">Bahasa Inggris (English)</option>
+                    </select>
                 </div>
             </div>
             
@@ -73,11 +75,11 @@
             <!-- Jumlah Soal -->
             <div>
                 <label class="block text-xs sm:text-sm font-semibold text-slate-700 mb-1">Jumlah Soal</label>
-                <input type="number" name="jumlahSoal" min="1" max="20" value="5" required class="w-full px-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-indigo-500 bg-white">
+                <input type="number" name="jumlahSoal" min="1" max="25" value="5" required class="w-full px-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-lg border border-slate-300 text-slate-700 focus:ring-2 focus:ring-indigo-500 bg-white">
             </div>
             
             <div class="pt-2">
-                <button type="submit" id="btnSubmit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 sm:py-3.5 px-4 rounded-xl shadow-md transition-all text-xs sm:text-sm flex justify-center items-center gap-2">
+                <button type="submit" id="btnSubmit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold py-3 sm:py-3.5 px-4 rounded-xl shadow-md transition-all text-xs sm:text-sm flex justify-center items-center gap-2 active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                     Racik Soal Sekarang
                 </button>
@@ -86,47 +88,69 @@
             <!-- Loading State -->
             <div id="loadingInfo" class="hidden flex-col items-center justify-center p-4 bg-indigo-50 rounded-xl border border-indigo-100">
                 <div class="animate-spin w-6 h-6 border-3 border-indigo-600 border-t-transparent rounded-full mb-2"></div>
-                <p class="text-indigo-900 font-semibold text-xs sm:text-sm text-center">Sedang menganalisis literatur asli...</p>
+                <p class="text-indigo-900 font-semibold text-xs sm:text-sm text-center">Sedang menganalisis literatur...</p>
                 <p class="text-indigo-600 text-[11px] sm:text-xs text-center mt-0.5">AI sedang menyusun soal HOTS & Kunci Jawaban. Harap tunggu.</p>
             </div>
         </form>
     </div>
 
 <script>
+    // Database materi komprehensif kurikulum Merdeka
     const dataKurikulum = {
-        "Kelas 10 (Fase E)": [
-            "Teks Laporan Hasil Observasi: Struktur dan kaidah teks",
-            "Teks Eksposisi: Analisis gagasan dan struktur",
-            "Teks Anekdot: Kritik sosial berbalut humor",
-            "Hikayat & Cerita Rakyat: Memahami nilai-nilai dan karakteristik sastra klasik",
-            "Teks Negosiasi: Memahami proses tawar-menawar dan kesepakatan",
-            "Biografi: Meneladani karakter tokoh",
-            "Puisi: Analisis unsur pembangun dan musikalisasi puisi"
-        ],
-        "Kelas 11 (Fase F)": [
-            "Teks Prosedur: Langkah-langkah melakukan suatu kegiatan",
-            "Teks Eksplanasi: Fenomena alam dan sosial",
-            "Ceramah: Penyampaian informasi di depan umum",
-            "Cerpen: Analisis unsur intrinsik dan ekstrinsik",
-            "Proposal: Penyusunan proposal kegiatan dan penelitian",
-            "Karya Ilmiah: Sistematika penulisan laporan penelitian",
-            "Resensi: Penilaian terhadap sebuah karya (buku atau film)"
-        ],
-        "Kelas 12 (Fase F)": [
-            "Surat Lamaran Pekerjaan: Struktur dan kaidah penulisan yang baik",
-            "Teks Sejarah: Novel sejarah dan teks cerita ulang (recount)",
-            "Teks Editorial/Tajuk Rencana: Isu aktual dan tajuk opini",
-            "Artikel dan Kritik Sastra: Membaca dan menanggapi teks non-fiksi serta sastra",
-            "Drama: Pemahaman naskah dan pementasan drama"
-        ]
+        "Bahasa Indonesia": {
+            "Kelas 10 (Fase E)": [
+                "Teks Laporan Hasil Observasi: Struktur dan kaidah teks",
+                "Teks Eksposisi: Analisis gagasan dan struktur",
+                "Teks Anekdot: Kritik sosial berbalut humor",
+                "Hikayat & Cerita Rakyat: Nilai-nilai dan karakteristik sastra klasik",
+                "Teks Negosiasi: Memahami proses kesepakatan",
+                "Biografi: Meneladani karakter tokoh",
+                "Puisi: Analisis unsur pembangun dan musikalisasi"
+            ],
+            "Kelas 11 (Fase F)": [
+                "Teks Prosedur: Langkah-langkah kegiatan",
+                "Teks Eksplanasi: Fenomena alam dan sosial",
+                "Ceramah: Informasi publik",
+                "Cerpen: Unsur intrinsik dan ekstrinsik",
+                "Proposal: Penyusunan proposal kegiatan",
+                "Karya Ilmiah: Sistematika laporan penelitian",
+                "Resensi: Penilaian terhadap sebuah karya"
+            ],
+            "Kelas 12 (Fase F)": [
+                "Surat Lamaran Pekerjaan: Kaidah penulisan",
+                "Teks Sejarah: Novel sejarah dan cerita ulang (recount)",
+                "Teks Editorial/Tajuk Rencana: Tajuk opini aktual",
+                "Artikel dan Kritik Sastra: Membaca dan menanggapi teks non-fiksi serta sastra",
+                "Drama: Pemahaman naskah dan pementasan"
+            ]
+        },
+        "Bahasa Inggris": {
+            "Kelas 10 (Fase E)": [
+                "Expression: Asking & Giving Permission, Opinion/Suggestion, Congratulation",
+                "Struktur Teks: Descriptive, Recount, and Narrative Text (Fiction/dongeng)",
+                "Tata Bahasa (Grammar): Simple Present Tense, Simple Past Tense, and Pronouns"
+            ],
+            "Kelas 11 (Fase F)": [
+                "Expression: Menyatakan pendapat pribadi dan membahas isu aktual",
+                "Struktur Teks: Analytical Exposition, Hortatory Exposition, and Procedure Text",
+                "Tata Bahasa (Grammar): Passive Voice, Conditional Sentences, Cause and Effect"
+            ],
+            "Kelas 12 (Fase F)": [
+                "Functional: Menulis Surat Lamaran Pekerjaan (Application Letter) dan Curriculum Vitae (CV)",
+                "Struktur Teks: News Item Text (Berita) dan Explanation Text (Fenomena)",
+                "Tata Bahasa (Grammar): Direct and Indirect Speech, Causative Verbs, Adjective Clause"
+            ]
+        }
     };
 
     function updateMateri() {
+        const mataPelajaran = document.getElementById("mataPelajaran").value;
         const jenjang = document.getElementById("jenjang").value;
         const materiDropdown = document.getElementById("materi");
         materiDropdown.innerHTML = "";
         
-        dataKurikulum[jenjang].forEach(materi => {
+        const daftarMateri = dataKurikulum[mataPelajaran][jenjang];
+        daftarMateri.forEach(materi => {
             const opsi = document.createElement("option");
             opsi.value = materi;
             opsi.textContent = materi;
@@ -134,8 +158,10 @@
         });
     }
 
+    // Jalankan update materi saat halaman pertama kali dimuat
     window.onload = updateMateri;
 
+    // Tampilkan animasi loading saat form dikirim
     document.getElementById('formSoal').addEventListener('submit', function() {
         document.getElementById('btnSubmit').classList.add('hidden');
         document.getElementById('loadingInfo').classList.remove('hidden');
