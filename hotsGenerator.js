@@ -3,39 +3,30 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const JENIS_VALID = ["Pilihan Ganda", "Uraian"];
 
-// Prompt Sistem - Paradigma Deep Learning Kemendikdasmen & Konteks Nyata
-const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan dan Pembuat Instrumen Asesmen tingkat SMA/SMK di Indonesia. 
-Keahlian utama Anda adalah menyusun instrumen evaluasi HOTS (C4-Menganalisis, C5-Mengevaluasi, C6-Mencipta) yang selaras dengan paradigma Deep Learning (Pembelajaran Mendalam) dari Kemendikdasmen.
-
-ATURAN MUTLAK PENYUSUNAN SOAL:
-1. Bermakna, Kontekstual & Realistis (Meaningful Learning): Setiap soal WAJIB diawali dengan stimulus. Stimulus harus berupa situasi dunia nyata yang sangat dekat dan relevan dengan keseharian siswa remaja masa kini (Gen Z). Jika menggunakan karya sastra atau artikel jurnalistik, WAJIB menggunakan karya faktual/nyata dan MENCANTUMKAN atribusinya (Judul, Penulis, Tahun Terbit) di dalam stimulus.
-2. Menalar & Kritis (Mindful Learning): DILARANG keras membuat soal hafalan (C1-C3). Pertanyaan harus menantang siswa untuk menguraikan masalah, mengevaluasi solusi, atau mensintesis ide baru berdasarkan stimulus.
-3. Eksploratif & Menggugah (Joyful Learning): Kemas narasi soal agar menarik, tidak mengintimidasi, dan memicu rasa ingin tahu siswa layaknya memecahkan sebuah tantangan riil.
-4. Distraktor Psikometrik: Opsi jawaban salah (pengecoh) HARUS mencerminkan miskonsepsi umum atau kesalahan logika yang paling sering dialami siswa.
-5. Pembahasan Reflektif: Berikan penjelasan mengapa jawaban tersebut benar secara konsep, dan uraikan letak kesalahan pada opsi lainnya secara edukatif.
-
-ATURAN FORMAT OUTPUT:
-- Jawab HANYA menggunakan struktur JSON murni yang valid.
-- Dilarang menggunakan backticks markdown (seperti \`\`\`json).
-- Dilarang menggunakan enter (newline) asli di dalam nilai string; gunakan "\\n".`;
+// Prompt dipadatkan (Diet Prompt) agar AI memproses lebih cepat tanpa kehilangan bobot HOTS
+const SYSTEM_PROMPT = `Anda AI pembuat soal evaluasi HOTS (C4-C6) SMA/SMK berparadigma Deep Learning.
+ATURAN FINAL:
+1. STIMULUS NYATA: Wajib berikan stimulus otentik sebelum pertanyaan (kasus IT, tren Gen Z, atau kutipan sastra/artikel asli). Jika mengutip karya, WAJIB cantumkan [Judul, Penulis, Tahun].
+2. NALAR (BUKAN HAFALAN): Pertanyaan harus menguji pemecahan masalah, evaluasi, atau analisis.
+3. DISTRAKTOR (Opsi Salah): Harus menjebak berdasarkan miskonsepsi umum/kesalahan logika siswa.
+4. PEMBAHASAN: Singkat, padat, dan jelaskan letak kesalahan opsi lain.
+5. FORMAT: Hanya output JSON murni (tanpa backticks markdown \`\`\`json). Gunakan "\\n" untuk baris baru.`;
 
 function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
   let spesifikMapel = "";
   if (mataPelajaran === "Informatika") {
-    spesifikMapel = "Hadirkan stimulus berupa tantangan sistem yang ada di lingkungan siswa (misal: algoritma media sosial, keamanan jaringan Wi-Fi, error kode pada tugas, IoT di sekolah). Uji logika komputasional, troubleshooting, dan dampaknya, bukan hafalan sintaks.";
+    spesifikMapel = "Stimulus berupa kasus IT sehari-hari siswa (algoritma sosmed, jaringan Wi-Fi, error kode, IoT). Uji logika komputasional/troubleshooting.";
   } else if (mataPelajaran === "Bahasa Inggris") {
-    spesifikMapel = "Stimulus dan pertanyaan WAJIB dalam Bahasa Inggris. Uji pemahaman tersirat (implied meaning) dan evaluasi argumen. WAJIB menggunakan kutipan karya sastra/artikel jurnalistik berbahasa Inggris NYATA (cantumkan Title, Author, Year di teks) atau skenario percakapan otentik siswa.";
+    spesifikMapel = "Soal WAJIB Bahasa Inggris. Uji 'implied meaning'. Gunakan kutipan sastra/berita asli (sebutkan Title, Author, Year) atau dialog riil Gen Z.";
   } else {
-    spesifikMapel = "Fokus pada literasi membaca dan berpikir kritis. WAJIB menggunakan kutipan karya sastra/teks otentik Indonesia NYATA (cantumkan Judul, Penulis, Tahun di dalam teks) atau fenomena/isu sosial kontemporer yang relevan dengan remaja.";
+    spesifikMapel = "Fokus literasi kritis. Gunakan kutipan sastra/esai Indonesia asli (sebutkan Judul, Penulis, Tahun) atau isu sosial Gen Z.";
   }
 
-  return `Buat ${jumlahSoal} butir soal ${jenisSoal} level HOTS untuk Mata Pelajaran: ${mataPelajaran}.
-Konteks / Capaian Pembelajaran: ${deskripsi}
+  return `Mapel: ${mataPelajaran}
+Konteks: ${deskripsi}
+Instruksi Tambahan: ${spesifikMapel}
 
-INSTRUKSI SPESIFIK MATA PELAJARAN:
-${spesifikMapel}
-
-Struktur JSON yang WAJIB dipatuhi:
+Buat ${jumlahSoal} soal ${jenisSoal} dalam struktur JSON berikut:
 {
   "judul": "${judulSoal}",
   "mataPelajaran": "${mataPelajaran}",
@@ -44,14 +35,13 @@ Struktur JSON yang WAJIB dipatuhi:
     {
       "nomor": 1,
       "levelBloom": "C4/C5/C6",
-      "pertanyaan": "[STIMULUS KASUS RIIL ATAU KUTIPAN KARYA NYATA BESERTA SUMBERNYA] \\n\\n [PERTANYAAN PENALARAN]",
+      "pertanyaan": "[STIMULUS NYATA/KUTIPAN BESERTA SUMBER] \\n\\n [PERTANYAAN NALAR]",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
     }
   ]
-}
-Catatan Penting: Jika jenis soal "Uraian", tetap sediakan key "opsi" namun kosongkan (""), lalu berikan rubrik penilaian pada "jawabanBenar".`;
+}`;
 }
 
 function repairJsonBackslashes(text) {
@@ -70,7 +60,8 @@ function parseGeminiJson(raw) {
   }
 }
 
-const MODELS = ["gemini-flash-latest", "gemini-3.1-flash-lite"];
+// Menggunakan flash-lite jika tersedia untuk kecepatan ekstra, fallback ke flash-latest
+const MODELS = ["gemini-3.1-flash-lite", "gemini-flash-latest"];
 
 async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
   judulSoal = String(judulSoal || "").trim();
@@ -111,7 +102,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
   }
 
   if (!parsed) {
-    throw new Error("Sistem AI gagal memproses output JSON dengan tepat. Mohon klik tombol buat soal sekali lagi.");
+    throw new Error("Waktu AI habis atau gagal. Mohon coba kurangi jumlah soal atau klik buat soal lagi.");
   }
 
   parsed.judul = parsed.judul || judulSoal;
