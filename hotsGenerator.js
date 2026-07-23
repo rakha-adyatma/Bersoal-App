@@ -3,14 +3,21 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const JENIS_VALID = ["Pilihan Ganda", "Uraian"];
 
-// Prompt dipadatkan (Diet Prompt) agar AI memproses lebih cepat tanpa kehilangan bobot HOTS
-const SYSTEM_PROMPT = `Anda AI pembuat soal evaluasi HOTS (C4-C6) SMA/SMK berparadigma Deep Learning.
-ATURAN FINAL:
-1. STIMULUS NYATA: Wajib berikan stimulus otentik sebelum pertanyaan (kasus IT, tren Gen Z, atau kutipan sastra/artikel asli). Jika mengutip karya, WAJIB cantumkan [Judul, Penulis, Tahun].
-2. NALAR (BUKAN HAFALAN): Pertanyaan harus menguji pemecahan masalah, evaluasi, atau analisis.
-3. DISTRAKTOR (Opsi Salah): Harus menjebak berdasarkan miskonsepsi umum/kesalahan logika siswa.
-4. PEMBAHASAN: Singkat, padat, dan jelaskan letak kesalahan opsi lain.
-5. FORMAT: Hanya output JSON murni (tanpa backticks markdown \`\`\`json). Gunakan "\\n" untuk baris baru.`;
+// Prompt Sistem - Paradigma Deep Learning Kemendikdasmen & Konteks Nyata
+const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan dan Pembuat Instrumen Asesmen tingkat SMA/SMK di Indonesia. 
+Keahlian utama Anda adalah menyusun instrumen evaluasi HOTS (C4-Menganalisis, C5-Mengevaluasi, C6-Mencipta) yang selaras dengan paradigma Deep Learning (Pembelajaran Mendalam) dari Kemendikdasmen.
+
+ATURAN MUTLAK PENYUSUNAN SOAL:
+1. Bermakna, Kontekstual & Realistis (Meaningful Learning): Setiap soal WAJIB diawali dengan stimulus. Stimulus harus berupa situasi dunia nyata yang sangat dekat dan relevan dengan keseharian siswa remaja masa kini (Gen Z). Jika menggunakan karya sastra atau artikel jurnalistik, WAJIB menggunakan karya faktual/nyata dan MENCANTUMKAN atribusinya (Judul, Penulis, Tahun Terbit) di dalam stimulus.
+2. Menalar & Kritis (Mindful Learning): DILARANG keras membuat soal hafalan (C1-C3). Pertanyaan harus menantang siswa untuk menguraikan masalah, mengevaluasi solusi, atau mensintesis ide baru berdasarkan stimulus.
+3. Eksploratif & Menggugah (Joyful Learning): Kemas narasi soal agar menarik, tidak mengintimidasi, dan memicu rasa ingin tahu siswa layaknya memecahkan sebuah tantangan riil.
+4. Distraktor Psikometrik: Opsi jawaban salah (pengecoh) HARUS mencerminkan miskonsepsi umum atau kesalahan logika yang paling sering dialami siswa.
+5. Pembahasan Reflektif: Berikan penjelasan mengapa jawaban tersebut benar secara konsep, dan uraikan letak kesalahan pada opsi lainnya secara edukatif.
+
+ATURAN FORMAT OUTPUT:
+- Jawab HANYA menggunakan struktur JSON murni yang valid.
+- Dilarang menggunakan backticks markdown (seperti \`\`\`json).
+- Dilarang menggunakan enter (newline) asli di dalam nilai string; gunakan "\\n".`;
 
 function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
   let spesifikMapel = "";
@@ -25,6 +32,9 @@ function buildUserPrompt({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumla
   return `Mapel: ${mataPelajaran}
 Konteks: ${deskripsi}
 Instruksi Tambahan: ${spesifikMapel}
+
+PERINGATAN KERAS JUMLAH SOAL:
+Anda WAJIB menghasilkan TEPAT ${jumlahSoal} soal. JANGAN PERNAH berhenti, memotong, atau merangkum output sebelum soal ke-${jumlahSoal} selesai ditulis beserta pembahasannya!
 
 Buat ${jumlahSoal} soal ${jenisSoal} dalam struktur JSON berikut:
 {
@@ -41,7 +51,8 @@ Buat ${jumlahSoal} soal ${jenisSoal} dalam struktur JSON berikut:
       "pembahasan": "..."
     }
   ]
-}`;
+}
+Catatan Penting: Jika jenis soal "Uraian", tetap sediakan key "opsi" namun kosongkan (""), lalu berikan rubrik penilaian pada "jawabanBenar".`;
 }
 
 function repairJsonBackslashes(text) {
@@ -102,7 +113,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
   }
 
   if (!parsed) {
-    throw new Error("Waktu AI habis atau gagal. Mohon coba kurangi jumlah soal atau klik buat soal lagi.");
+    throw new Error("Waktu AI habis atau AI gagal mengonstruksi JSON sesuai format. Mohon kurangi jumlah soal (misal: 10 soal) dan coba lagi.");
   }
 
   parsed.judul = parsed.judul || judulSoal;
