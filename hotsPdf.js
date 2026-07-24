@@ -1,11 +1,11 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
 
-// Mengambil font kustom dari folder assets agar teks tidak berantakan
+// Mengambil font menggunakan process.cwd() agar terbaca oleh server Vercel
 function getFonts() {
   return {
-    normal: path.join(__dirname, 'assets', 'fonts', 'DejaVuSans.ttf'),
-    bold: path.join(__dirname, 'assets', 'fonts', 'DejaVuSans-Bold.ttf')
+    normal: path.join(process.cwd(), 'assets', 'fonts', 'DejaVuSans.ttf'),
+    bold: path.join(process.cwd(), 'assets', 'fonts', 'DejaVuSans-Bold.ttf')
   };
 }
 
@@ -30,9 +30,8 @@ function buildPdfSoal(data) {
     doc.font(fonts.normal).fontSize(11).text(item.pertanyaan, { align: 'justify' });
     doc.moveDown(0.5);
 
-    // KUNCI PERBAIKAN: Cek apakah soal ini punya opsi jawaban (Pilihan Ganda) atau Uraian
+    // Cek apakah soal ini punya opsi jawaban (Pilihan Ganda) atau Uraian
     if (item.opsi && typeof item.opsi === 'object' && Object.keys(item.opsi).length > 0) {
-      // Jika Pilihan Ganda, cetak A, B, C, D, E
       const labels = ['A', 'B', 'C', 'D', 'E'];
       labels.forEach(opt => {
         if (item.opsi[opt]) {
@@ -41,7 +40,7 @@ function buildPdfSoal(data) {
       });
       doc.moveDown(1.5);
     } else {
-      // Jika Uraian, berikan ruang kosong/jarak agar siswa bisa menulis jawaban
+      // Jika Uraian, berikan ruang kosong/jarak
       doc.moveDown(5); 
     }
   });
