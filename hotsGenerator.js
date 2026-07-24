@@ -30,8 +30,8 @@ Hasilkan JSON dengan struktur persis seperti ini:
 {
   "soal": [
     {
-      "levelBloom": "C4, C5, atau C6 (PILIH SALAH SATU SAJA beserta kata kerjanya, contoh: 'C4 - Menganalisis' atau 'C5 - Mengevaluasi')",
-      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]",
+      "levelBloom": "C4, C5, atau C6 (PILIH SALAH SATU SAJA beserta kata kerjanya, contoh: 'C4 - Menganalisis')",
+      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]. DILARANG KERAS MENULISKAN OPSI JAWABAN A/B/C/D/E DI DALAM TEKS PERTANYAAN INI!",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
@@ -118,12 +118,10 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
        semuaSoal = await generateSpecificType(jenisSoal, Number(jumlahSoal));
     }
 
-    // LOGIKA PERBAIKAN PENOMORAN DAN LEVEL BLOOM
     let noPG = 1;
     let noUraian = 1;
 
     semuaSoal.forEach((item) => {
-      // Jika AI masih membandel memberikan format C4/C5/C6, kita bersihkan
       if (!item.levelBloom || item.levelBloom.includes("C4/C5/C6")) {
           item.levelBloom = "C4 - Analisis"; 
       }
@@ -131,7 +129,6 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
       let isUraian = item.tipeSpesifik === "Uraian";
       if (!item.tipeSpesifik) isUraian = jenisSoal === "Uraian";
 
-      // Memisahkan penomoran Uraian dan PG
       if (isUraian) {
           item.nomor = noUraian++;
           item.isUraian = true;
