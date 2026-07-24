@@ -10,7 +10,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Penyimpanan sementara (In-Memory)
 const generatedDataStore = {};
 
 app.post('/generate', async (req, res) => {
@@ -23,8 +22,6 @@ app.post('/generate', async (req, res) => {
 
     const judulSoal = `Soal HOTS ${mataPelajaran} - ${jenjang}`;
     const deskripsiMateri = `Materi: ${materi} untuk ${jenjang}`;
-
-    // Jalankan Generator
     const hotsData = await generateHotsQuestions({
       mataPelajaran,
       judulSoal,
@@ -34,12 +31,8 @@ app.post('/generate', async (req, res) => {
       jumlahPG,
       jumlahUraian
     });
-
-    // Simpan ke memory
     const timestamp = Date.now();
     generatedDataStore[timestamp] = hotsData;
-
-    // Desain Success Page (Senada dengan Home Index)
     const successHtml = `
     <!DOCTYPE html>
     <html lang="id">
@@ -77,7 +70,7 @@ app.post('/generate', async (req, res) => {
                 <button onclick="toggleSidebar()" class="bg-indigo-600 text-white rounded-lg p-2 md:hidden">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <div class="ml-4 md:ml-0 font-semibold text-slate-600 text-sm">Panel Unduhan PDF</div>
+                <div class="ml-4 md:ml-0 font-semibold text-slate-600 text-sm">Unduh PDF</div>
             </header>
 
             <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex items-center justify-center">
@@ -145,7 +138,6 @@ app.get('/download/kunci/:id', async (req, res) => {
   try {
     const doc = buildPdfKunci(data);
     res.setHeader('Content-Type', 'application/pdf');
-    // SYNTAX YANG DIPERBAIKI (Hilangkan backslash sebelum backtick)
     res.setHeader('Content-Disposition', `attachment; filename="HOTS_KUNCI_${data.mataPelajaran.replace(/\s/g, '_')}_${req.params.id}.pdf"`);
     doc.pipe(res);
     doc.end();
