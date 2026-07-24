@@ -8,7 +8,6 @@ function getFonts() {
   };
 }
 
-// Fungsi serbaguna untuk mencetak Kop Surat di setiap file
 function cetakHeader(doc, data, fonts, isKunci = false) {
   doc.font(fonts.bold).fontSize(14).text(isKunci ? 'KUNCI JAWABAN & RUBRIK PENILAIAN' : 'INSTRUMEN EVALUASI HOTS', { align: 'center' });
   doc.fontSize(12).text(data.judul, { align: 'center' });
@@ -18,9 +17,8 @@ function cetakHeader(doc, data, fonts, isKunci = false) {
   doc.text(`Mata Pelajaran    : ${data.mataPelajaran}`);
   doc.text(`Tipe Asesmen      : ${data.jenisSoal}`);
   
-  // Menggambar garis lurus pemisah header
   const y = doc.y + 5;
-  doc.moveTo(50, y).lineTo(545, y).stroke();
+  doc.moveTo(50, y).lineTo(545, y).lineWidth(1).stroke();
   doc.moveDown(1.5);
 }
 
@@ -33,7 +31,6 @@ function buildPdfSoal(data) {
   const soalPG = data.soal.filter(s => !s.isUraian);
   const soalUraian = data.soal.filter(s => s.isUraian);
 
-  // BAGIAN A: PILIHAN GANDA
   if (soalPG.length > 0) {
     if (data.jenisSoal === 'Campuran') {
        doc.font(fonts.bold).fontSize(11).text('A. PILIHAN GANDA');
@@ -41,21 +38,36 @@ function buildPdfSoal(data) {
     }
     soalPG.forEach(item => {
        doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
-       doc.font(fonts.normal).text(item.pertanyaan, { align: 'justify' });
+       
+       // CLEANUP: Menghapus opsi nyasar atau titik-titik (....) bawaan AI di dalam teks pertanyaan
+       let teksPertanyaan = item.pertanyaan
+           .replace(/\n\s*[A-E]\.\s+[\s\S]*$/i, '') 
+           .replace(/\.{4,}/g, '') // Memusnahkan titik-titik lebih dari 4
+           .trim();
+       
+       doc.font(fonts.normal).text(teksPertanyaan, { align: 'justify' });
        doc.moveDown(0.5);
        
+       // TEKNIK HANGING INDENT: A,B,C terpisah dari teks panjang agar menjorok rapi
        if (item.opsi && typeof item.opsi === 'object') {
+         const startX = 50; 
          ['A', 'B', 'C', 'D', 'E'].forEach(opt => {
-           if (item.opsi[opt]) doc.text(`${opt}. ${item.opsi[opt]}`);
+           if (item.opsi[opt]) {
+             let teksOpsi = item.opsi[opt].replace(/^[A-E]\.\s*/i, '').trim();
+             let currentY = doc.y;
+             
+             // Cetak huruf opsi (misal: 'A.')
+             doc.text(`${opt}.`, startX, currentY);
+             // Cetak teks jawabannya (digeser 18 pixel ke kanan)
+             doc.text(teksOpsi, startX + 18, currentY, { align: 'justify', width: 477 });
+           }
          });
        }
        doc.moveDown(1.5);
     });
   }
 
-  // BAGIAN B: URAIAN
   if (soalUraian.length > 0) {
-    // Jika sebelumnya ada Pilihan Ganda, pindah ke Halaman Baru!
     if (soalPG.length > 0) doc.addPage(); 
     
     if (data.jenisSoal === 'Campuran') {
@@ -64,15 +76,24 @@ function buildPdfSoal(data) {
     }
     soalUraian.forEach(item => {
        doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
-       doc.font(fonts.normal).text(item.pertanyaan, { align: 'justify' });
-       doc.moveDown(1);
        
-       // Mencetak garis titik-titik kosong untuk dijawab siswa
+       // CLEANUP: Mencegah AI mencetak titik-titik bawaan
+       let teksPertanyaan = item.pertanyaan.replace(/\.{4,}/g, '').trim();
+       doc.font(fonts.normal).text(teksPertanyaan, { align: 'justify' });
+       
+       // MENGGAMBAR GARIS PUTUS-PUTUS VEKTOR (Bersih dan sejajar)
        for (let i = 0; i < 5; i++) {
-          doc.text('................................................................................................................................................................', { align: 'left', opacity: 0.5 });
-          doc.moveDown(0.5);
+          doc.moveDown(1.5);
+          let yLine = doc.y;
+          doc.lineWidth(0.5).strokeOpacity(0.5)
+             .moveTo(50, yLine)
+             .lineTo(545, yLine)
+             .dash(3, { space: 4 }) // Membuat efek garis putus-putus titik
+             .stroke()
+             .undash() // Reset agar teks di bawahnya tidak error
+             .strokeOpacity(1);
        }
-       doc.moveDown(1);
+       doc.moveDown(2);
     });
   }
 
@@ -102,7 +123,7 @@ function buildPdfKunci(data) {
   }
 
   if (soalUraian.length > 0) {
-    if (soalPG.length > 0) doc.addPage(); // Pindah Halaman
+    if (soalPG.length > 0) doc.addPage();
     if (data.jenisSoal === 'Campuran') {
        doc.font(fonts.bold).fontSize(11).text('B. URAIAN');
        doc.moveDown(0.5);

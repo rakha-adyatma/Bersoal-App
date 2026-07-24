@@ -16,6 +16,8 @@ function buildUserPrompt(mataPelajaran, deskripsi, jenisSoalType, batchSize) {
     spesifikMapel = "Stimulus kasus IT otentik (jaringan, IoT, AI, algoritma sosmed).";
   } else if (mataPelajaran === "Bahasa Inggris") {
     spesifikMapel = "Soal WAJIB Bahasa Inggris. Uji 'implied meaning'. Pakai kutipan nyata (sertakan Title, Author).";
+  } else if (mataPelajaran === "Matematika") {
+    spesifikMapel = "Stimulus WAJIB berupa masalah kontekstual (ekonomi, sains, teknik, atau keseharian). Uji kemampuan pemodelan dan penalaran matematis, BUKAN sekadar hitungan langsung.";
   } else {
     spesifikMapel = "Gunakan literasi kritis, karya otentik, atau fenomena sosial terkini.";
   }
@@ -30,8 +32,8 @@ Hasilkan JSON dengan struktur persis seperti ini:
 {
   "soal": [
     {
-      "levelBloom": "C4, C5, atau C6 (PILIH SALAH SATU SAJA beserta kata kerjanya, contoh: 'C4 - Menganalisis')",
-      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]. DILARANG KERAS MENULISKAN OPSI JAWABAN A/B/C/D/E DI DALAM TEKS PERTANYAAN INI!",
+      "levelBloom": "C4, C5, atau C6 (PILIH SALAH SATU SAJA, contoh: 'C4 - Menganalisis')",
+      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]. DILARANG KERAS MENGKETIK OPSI JAWABAN ATAU TITIK-TITIK KOSONG (....) DI TEKS INI!",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
