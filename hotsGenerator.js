@@ -30,6 +30,7 @@ Hasilkan JSON dengan struktur persis seperti ini:
 {
   "soal": [
     {
+      "levelBloom": "C4, C5, atau C6 (PILIH SALAH SATU SAJA beserta kata kerjanya, contoh: 'C4 - Menganalisis' atau 'C5 - Mengevaluasi')",
       "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
@@ -65,7 +66,6 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const MAX_PER_BATCH = 8;
 
-  // Fungsi Internal Batching
   const generateSpecificType = async (typeLabel, totalRequired) => {
     if (totalRequired <= 0) return [];
     
@@ -97,7 +97,6 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
       }
       if (!parsed || !parsed.soal) throw new Error(`Gagal memproses batch soal ${typeLabel}`);
       
-      // Memberi tag pada setiap soal agar ketahuan tipenya (PG atau Uraian)
       parsed.soal.forEach(q => q.tipeSpesifik = typeLabel);
       return parsed.soal;
     };
@@ -111,7 +110,6 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
   try {
     let semuaSoal = [];
     
-    // Logika penggabungan jika Campuran
     if (jenisSoal === "Campuran") {
        const pgData = await generateSpecificType("Pilihan Ganda", Number(jumlahPG));
        const uraianData = await generateSpecificType("Uraian", Number(jumlahUraian));
@@ -120,14 +118,26 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
        semuaSoal = await generateSpecificType(jenisSoal, Number(jumlahSoal));
     }
 
-    // Rapikan Nomor Urut Global
-    semuaSoal.forEach((item, index) => {
-      item.nomor = index + 1;
-      item.levelBloom = item.levelBloom || "C4/C5/C6";
-      
-      // Jika mode campuran, tambahkan info jenis soal di pertanyaannya agar jelas di PDF
-      if (jenisSoal === "Campuran" && item.tipeSpesifik) {
-          item.levelBloom = `${item.levelBloom} - [${item.tipeSpesifik}]`;
+    // LOGIKA PERBAIKAN PENOMORAN DAN LEVEL BLOOM
+    let noPG = 1;
+    let noUraian = 1;
+
+    semuaSoal.forEach((item) => {
+      // Jika AI masih membandel memberikan format C4/C5/C6, kita bersihkan
+      if (!item.levelBloom || item.levelBloom.includes("C4/C5/C6")) {
+          item.levelBloom = "C4 - Analisis"; 
+      }
+
+      let isUraian = item.tipeSpesifik === "Uraian";
+      if (!item.tipeSpesifik) isUraian = jenisSoal === "Uraian";
+
+      // Memisahkan penomoran Uraian dan PG
+      if (isUraian) {
+          item.nomor = noUraian++;
+          item.isUraian = true;
+      } else {
+          item.nomor = noPG++;
+          item.isUraian = false;
       }
     });
 

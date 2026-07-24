@@ -1,7 +1,6 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
 
-// Mengambil font menggunakan process.cwd() agar terbaca oleh server Vercel
 function getFonts() {
   return {
     normal: path.join(process.cwd(), 'assets', 'fonts', 'DejaVuSans.ttf'),
@@ -9,41 +8,73 @@ function getFonts() {
   };
 }
 
+// Fungsi serbaguna untuk mencetak Kop Surat di setiap file
+function cetakHeader(doc, data, fonts, isKunci = false) {
+  doc.font(fonts.bold).fontSize(14).text(isKunci ? 'KUNCI JAWABAN & RUBRIK PENILAIAN' : 'INSTRUMEN EVALUASI HOTS', { align: 'center' });
+  doc.fontSize(12).text(data.judul, { align: 'center' });
+  doc.moveDown(0.5);
+  
+  doc.font(fonts.normal).fontSize(10);
+  doc.text(`Mata Pelajaran    : ${data.mataPelajaran}`);
+  doc.text(`Tipe Asesmen      : ${data.jenisSoal}`);
+  
+  // Menggambar garis lurus pemisah header
+  const y = doc.y + 5;
+  doc.moveTo(50, y).lineTo(545, y).stroke();
+  doc.moveDown(1.5);
+}
+
 function buildPdfSoal(data) {
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
   const fonts = getFonts();
 
-  // Bagian Header (Kop Soal)
-  doc.font(fonts.bold).fontSize(16).text(data.judul, { align: 'center' });
-  doc.fontSize(12).text(`Mata Pelajaran: ${data.mataPelajaran}`, { align: 'center' });
-  doc.text(`Jenis Ujian: ${data.jenisSoal}`, { align: 'center' });
-  doc.moveDown(2);
+  cetakHeader(doc, data, fonts, false);
 
-  // Iterasi pencetakan soal
-  data.soal.forEach((item) => {
-    let labelBloom = item.levelBloom ? ` ${item.levelBloom} ` : '';
-    
-    // Nomor Soal dan Level Kognitif
-    doc.font(fonts.bold).fontSize(11).text(`No. ${item.nomor} | ${labelBloom}`);
-    
-    // Pertanyaan (Stimulus)
-    doc.font(fonts.normal).fontSize(11).text(item.pertanyaan, { align: 'justify' });
-    doc.moveDown(0.5);
+  const soalPG = data.soal.filter(s => !s.isUraian);
+  const soalUraian = data.soal.filter(s => s.isUraian);
 
-    // Cek apakah soal ini punya opsi jawaban (Pilihan Ganda) atau Uraian
-    if (item.opsi && typeof item.opsi === 'object' && Object.keys(item.opsi).length > 0) {
-      const labels = ['A', 'B', 'C', 'D', 'E'];
-      labels.forEach(opt => {
-        if (item.opsi[opt]) {
-          doc.text(`${opt}. ${item.opsi[opt]}`);
-        }
-      });
-      doc.moveDown(1.5);
-    } else {
-      // Jika Uraian, berikan ruang kosong/jarak
-      doc.moveDown(5); 
+  // BAGIAN A: PILIHAN GANDA
+  if (soalPG.length > 0) {
+    if (data.jenisSoal === 'Campuran') {
+       doc.font(fonts.bold).fontSize(11).text('A. PILIHAN GANDA');
+       doc.moveDown(0.5);
     }
-  });
+    soalPG.forEach(item => {
+       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
+       doc.font(fonts.normal).text(item.pertanyaan, { align: 'justify' });
+       doc.moveDown(0.5);
+       
+       if (item.opsi && typeof item.opsi === 'object') {
+         ['A', 'B', 'C', 'D', 'E'].forEach(opt => {
+           if (item.opsi[opt]) doc.text(`${opt}. ${item.opsi[opt]}`);
+         });
+       }
+       doc.moveDown(1.5);
+    });
+  }
+
+  // BAGIAN B: URAIAN
+  if (soalUraian.length > 0) {
+    // Jika sebelumnya ada Pilihan Ganda, pindah ke Halaman Baru!
+    if (soalPG.length > 0) doc.addPage(); 
+    
+    if (data.jenisSoal === 'Campuran') {
+       doc.font(fonts.bold).fontSize(11).text('B. URAIAN');
+       doc.moveDown(0.5);
+    }
+    soalUraian.forEach(item => {
+       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
+       doc.font(fonts.normal).text(item.pertanyaan, { align: 'justify' });
+       doc.moveDown(1);
+       
+       // Mencetak garis titik-titik kosong untuk dijawab siswa
+       for (let i = 0; i < 5; i++) {
+          doc.text('................................................................................................................................................................', { align: 'left', opacity: 0.5 });
+          doc.moveDown(0.5);
+       }
+       doc.moveDown(1);
+    });
+  }
 
   return doc;
 }
@@ -52,29 +83,39 @@ function buildPdfKunci(data) {
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
   const fonts = getFonts();
 
-  // Bagian Header Kunci Jawaban
-  doc.font(fonts.bold).fontSize(16).text(`KUNCI JAWABAN & RUBRIK`, { align: 'center' });
-  doc.fontSize(12).text(`${data.judul}`, { align: 'center' });
-  doc.text(`Mata Pelajaran: ${data.mataPelajaran}`, { align: 'center' });
-  doc.moveDown(2);
+  cetakHeader(doc, data, fonts, true);
 
-  // Iterasi pencetakan kunci dan pembahasan
-  data.soal.forEach((item) => {
-    let labelBloom = item.levelBloom ? ` ${item.levelBloom} ` : '';
-    
-    doc.font(fonts.bold).fontSize(11).text(`No. ${item.nomor} | ${labelBloom}`);
-    
-    // Cek tipe soal berdasarkan isi jawabanBenar
-    if (item.opsi && typeof item.opsi === 'object' && Object.keys(item.opsi).length > 0) {
-       doc.font(fonts.bold).text(`Jawaban: ${item.jawabanBenar}`);
-    } else {
-       doc.font(fonts.bold).text(`Rubrik Penilaian:`);
-       doc.font(fonts.normal).text(item.jawabanBenar, { align: 'justify' });
+  const soalPG = data.soal.filter(s => !s.isUraian);
+  const soalUraian = data.soal.filter(s => s.isUraian);
+
+  if (soalPG.length > 0) {
+    if (data.jenisSoal === 'Campuran') {
+       doc.font(fonts.bold).fontSize(11).text('A. PILIHAN GANDA');
+       doc.moveDown(0.5);
     }
-    
-    doc.font(fonts.normal).text(`Pembahasan: ${item.pembahasan}`, { align: 'justify' });
-    doc.moveDown(1.5);
-  });
+    soalPG.forEach(item => {
+       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
+       doc.text(`Jawaban: ${item.jawabanBenar}`);
+       doc.font(fonts.normal).text(`Pembahasan: ${item.pembahasan}`, { align: 'justify' });
+       doc.moveDown(1.5);
+    });
+  }
+
+  if (soalUraian.length > 0) {
+    if (soalPG.length > 0) doc.addPage(); // Pindah Halaman
+    if (data.jenisSoal === 'Campuran') {
+       doc.font(fonts.bold).fontSize(11).text('B. URAIAN');
+       doc.moveDown(0.5);
+    }
+    soalUraian.forEach(item => {
+       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
+       doc.text(`Rubrik Penilaian:`);
+       doc.font(fonts.normal).text(item.jawabanBenar, { align: 'justify' });
+       doc.moveDown(0.5);
+       doc.text(`Pembahasan Tambahan: ${item.pembahasan}`, { align: 'justify' });
+       doc.moveDown(1.5);
+    });
+  }
 
   return doc;
 }
