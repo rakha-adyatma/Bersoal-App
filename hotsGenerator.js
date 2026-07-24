@@ -1,51 +1,43 @@
 require('dotenv').config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const JENIS_VALID = ["Pilihan Ganda", "Uraian"];
+const JENIS_VALID = ["Pilihan Ganda", "Uraian", "Campuran"];
 
-// Prompt Sistem - Paradigma Deep Learning Kemendikdasmen & Konteks Nyata
-const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan dan Pembuat Instrumen Asesmen tingkat SMA/SMK di Indonesia. 
-Keahlian utama Anda adalah menyusun instrumen evaluasi HOTS (C4-Menganalisis, C5-Mengevaluasi, C6-Mencipta) yang selaras dengan paradigma Deep Learning (Pembelajaran Mendalam) dari Kemendikdasmen.
+const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan tingkat SMA/SMK berparadigma Deep Learning.
+ATURAN MUTLAK:
+1. Kontekstual: Selalu gunakan stimulus/studi kasus dunia nyata, fenomena Gen Z, atau kutipan karya NYATA (wajib sebutkan Judul/Sumber).
+2. Nalar Kritis: Uji analisis dan logika tingkat tinggi (HOTS C4-C6), bukan sekadar mengingat (C1-C3).
+3. Distraktor Logis: Opsi pengecoh harus logis berdasarkan kemungkinan miskonsepsi siswa.
+4. Output JSON Murni: Jangan gunakan backticks markdown, berikan hanya objek JSON valid. Gunakan "\\n" untuk pindah baris.`;
 
-ATURAN MUTLAK PENYUSUNAN SOAL:
-1. Bermakna, Kontekstual & Realistis (Meaningful Learning): Setiap soal WAJIB diawali dengan stimulus. Stimulus harus berupa situasi dunia nyata yang sangat dekat dan relevan dengan keseharian siswa remaja masa kini (Gen Z). Jika menggunakan karya sastra atau artikel jurnalistik, WAJIB menggunakan karya faktual/nyata dan MENCANTUMKAN atribusinya (Judul, Penulis, Tahun Terbit) di dalam stimulus.
-2. Menalar & Kritis (Mindful Learning): DILARANG keras membuat soal hafalan (C1-C3). Pertanyaan harus menantang siswa untuk menguraikan masalah, mengevaluasi solusi, atau mensintesis ide baru berdasarkan stimulus.
-3. Eksploratif & Menggugah (Joyful Learning): Kemas narasi soal agar menarik, tidak mengintimidasi, dan memicu rasa ingin tahu siswa layaknya memecahkan sebuah tantangan riil.
-4. Distraktor Psikometrik: Opsi jawaban salah (pengecoh) HARUS mencerminkan miskonsepsi umum atau kesalahan logika yang paling sering dialami siswa.
-5. Pembahasan Reflektif: Berikan penjelasan mengapa jawaban tersebut benar secara konsep, dan uraikan letak kesalahan pada opsi lainnya secara edukatif.
-
-ATURAN FORMAT OUTPUT:
-- Jawab HANYA menggunakan struktur JSON murni yang valid.
-- Dilarang menggunakan backticks markdown (seperti \`\`\`json).
-- Dilarang menggunakan enter (newline) asli di dalam nilai string; gunakan "\\n".`;
-
-function buildUserPrompt(mataPelajaran, deskripsi, jenisSoal, batchSize) {
+function buildUserPrompt(mataPelajaran, deskripsi, jenisSoalType, batchSize) {
   let spesifikMapel = "";
   if (mataPelajaran === "Informatika") {
-    spesifikMapel = "Stimulus berupa kasus IT sehari-hari siswa (algoritma sosmed, jaringan Wi-Fi, error kode, IoT). Uji logika komputasional/troubleshooting.";
+    spesifikMapel = "Stimulus kasus IT otentik (jaringan, IoT, AI, algoritma sosmed).";
   } else if (mataPelajaran === "Bahasa Inggris") {
-    spesifikMapel = "Soal WAJIB Bahasa Inggris. Uji 'implied meaning'. Gunakan kutipan sastra/berita asli (sebutkan Title, Author, Year) atau dialog riil Gen Z.";
+    spesifikMapel = "Soal WAJIB Bahasa Inggris. Uji 'implied meaning'. Pakai kutipan nyata (sertakan Title, Author).";
   } else {
-    spesifikMapel = "Fokus literasi kritis. Gunakan kutipan sastra/esai Indonesia asli (sebutkan Judul, Penulis, Tahun) atau isu sosial Gen Z.";
+    spesifikMapel = "Gunakan literasi kritis, karya otentik, atau fenomena sosial terkini.";
   }
 
   return `Mapel: ${mataPelajaran}
-Konteks: ${deskripsi}
+Materi: ${deskripsi}
 Instruksi Tambahan: ${spesifikMapel}
 
-PERINGATAN KERAS: Buat TEPAT ${batchSize} soal. JANGAN KURANG DAN JANGAN LEBIH!
+PERINGATAN: Buat TEPAT ${batchSize} soal ${jenisSoalType}. Tidak boleh kurang atau lebih!
 
-Buat ${batchSize} soal ${jenisSoal} dalam struktur JSON berikut:
+Hasilkan JSON dengan struktur persis seperti ini:
 {
   "soal": [
     {
-      "pertanyaan": "[STIMULUS NYATA/KUTIPAN BESERTA SUMBER] \\n\\n [PERTANYAAN NALAR]",
+      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]",
       "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
       "jawabanBenar": "A",
       "pembahasan": "..."
     }
   ]
-}`;
+}
+Catatan Penting: Jika jenis soal "Uraian", biarkan kunci "opsi" berupa string kosong (""), dan berikan rubrik di "jawabanBenar".`;
 }
 
 function repairJsonBackslashes(text) {
@@ -66,80 +58,80 @@ function parseGeminiJson(raw) {
 
 const MODELS = ["gemini-3.1-flash-lite", "gemini-flash-latest"];
 
-async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal }) {
+async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal, jumlahPG, jumlahUraian }) {
   judulSoal = String(judulSoal || "Evaluasi HOTS").trim();
-  deskripsi = String(deskripsi || "").trim();
-  jenisSoal = String(jenisSoal || "Pilihan Ganda").trim();
   mataPelajaran = String(mataPelajaran || "Umum").trim();
-  const totalSoal = Number(jumlahSoal);
-
+  
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-  // KUNCI PERBAIKAN: Memecah jumlah soal menjadi kloter (batch) maksimal 8 soal per proses AI
-  // agar AI tidak kehabisan memori token (Max Output Tokens).
   const MAX_PER_BATCH = 8;
-  const batches = [];
-  let sisa = totalSoal;
-  while (sisa > 0) {
-    batches.push(Math.min(sisa, MAX_PER_BATCH));
-    sisa -= MAX_PER_BATCH;
-  }
 
-  // Fungsi untuk menjalankan 1 kloter (batch)
-  const fetchBatch = async (batchSize) => {
-    const prompt = buildUserPrompt(mataPelajaran, deskripsi, jenisSoal, batchSize);
-    let parsed = null;
+  // Fungsi Internal Batching
+  const generateSpecificType = async (typeLabel, totalRequired) => {
+    if (totalRequired <= 0) return [];
+    
+    let batches = [];
+    let sisa = totalRequired;
+    while (sisa > 0) {
+      batches.push(Math.min(sisa, MAX_PER_BATCH));
+      sisa -= MAX_PER_BATCH;
+    }
 
-    outer: for (const name of MODELS) {
-      const model = genAI.getGenerativeModel({
-        model: name,
-        systemInstruction: SYSTEM_PROMPT,
-        generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 },
-      });
+    const fetchBatch = async (batchSize) => {
+      const prompt = buildUserPrompt(mataPelajaran, deskripsi, typeLabel, batchSize);
+      let parsed = null;
 
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const result = await model.generateContent(prompt);
-          parsed = parseGeminiJson(result.response.text());
-          if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) {
-            break outer; // Jika berhasil, keluar dari loop
-          }
-          parsed = null;
-        } catch (e) {
-          parsed = null;
+      outer: for (const name of MODELS) {
+        const model = genAI.getGenerativeModel({
+          model: name, systemInstruction: SYSTEM_PROMPT,
+          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 },
+        });
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const result = await model.generateContent(prompt);
+            parsed = parseGeminiJson(result.response.text());
+            if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) break outer;
+            parsed = null;
+          } catch (e) { parsed = null; }
         }
       }
-    }
+      if (!parsed || !parsed.soal) throw new Error(`Gagal memproses batch soal ${typeLabel}`);
+      
+      // Memberi tag pada setiap soal agar ketahuan tipenya (PG atau Uraian)
+      parsed.soal.forEach(q => q.tipeSpesifik = typeLabel);
+      return parsed.soal;
+    };
 
-    if (!parsed || !parsed.soal) {
-      throw new Error("Gagal memproses batch soal.");
-    }
-    return parsed.soal;
+    const results = await Promise.all(batches.map(size => fetchBatch(size)));
+    let combined = [];
+    results.forEach(arr => combined = combined.concat(arr));
+    return combined.slice(0, totalRequired);
   };
 
   try {
-    // Menjalankan semua kloter secara BERSAMAAN (Paralel) agar cepat
-    const results = await Promise.all(batches.map(size => fetchBatch(size)));
-    
-    // Menggabungkan kembali semua kloter soal menjadi satu daftar panjang
     let semuaSoal = [];
-    results.forEach(arr => {
-      semuaSoal = semuaSoal.concat(arr);
-    });
+    
+    // Logika penggabungan jika Campuran
+    if (jenisSoal === "Campuran") {
+       const pgData = await generateSpecificType("Pilihan Ganda", Number(jumlahPG));
+       const uraianData = await generateSpecificType("Uraian", Number(jumlahUraian));
+       semuaSoal = [...pgData, ...uraianData];
+    } else {
+       semuaSoal = await generateSpecificType(jenisSoal, Number(jumlahSoal));
+    }
 
-    // Merapikan nomor urut 1 sampai 25
-    semuaSoal = semuaSoal.slice(0, totalSoal); // Pastikan jumlahnya tepat
+    // Rapikan Nomor Urut Global
     semuaSoal.forEach((item, index) => {
       item.nomor = index + 1;
       item.levelBloom = item.levelBloom || "C4/C5/C6";
+      
+      // Jika mode campuran, tambahkan info jenis soal di pertanyaannya agar jelas di PDF
+      if (jenisSoal === "Campuran" && item.tipeSpesifik) {
+          item.levelBloom = `${item.levelBloom} - [${item.tipeSpesifik}]`;
+      }
     });
 
-    return {
-      judul: judulSoal,
-      mataPelajaran: mataPelajaran,
-      jenisSoal: jenisSoal,
-      soal: semuaSoal
-    };
+    return { judul: judulSoal, mataPelajaran, jenisSoal, soal: semuaSoal };
 
   } catch (error) {
     throw new Error("Sistem AI gagal memproses keseluruhan soal. Silakan coba lagi.");

@@ -15,60 +15,45 @@
 </head>
 <body class="flex h-screen overflow-hidden text-slate-800">
 
-    <!-- Latar Belakang Gelap untuk HP saat Sidebar terbuka -->
     <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-900/50 z-30 hidden" onclick="toggleSidebar()"></div>
 
-    <!-- SIDEBAR MINIMALIS BISA DIBUKA TUTUP -->
+    <!-- SIDEBAR -->
     <aside id="sidebar" class="w-64 bg-[#4f46e5] text-white flex-col h-full shadow-2xl z-40 fixed md:relative hidden md:flex transition-all">
-        <!-- Logo Area -->
         <div class="h-20 flex items-center px-6 border-b border-white/10">
-            <img src="/logo.png" alt="Logo BERSOAL" class="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md mr-3">
+            <!-- LOGO DIPERBAIKI (Tanpa garis miring) -->
+            <img src="logo.png" alt="Logo BERSOAL" class="h-10 w-auto object-contain rounded-xl bg-white p-1 shadow-md mr-3">
             <div>
                 <h1 class="text-xl font-bold tracking-wide">Bersoal</h1>
                 <p class="text-[10px] text-indigo-200 tracking-wider font-semibold">EVALUASI PEMBELAJARAN</p>
             </div>
         </div>
-
-        <!-- Navigation (Hanya Fitur Utama) -->
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            <a href="#" class="flex items-center gap-3 bg-white/20 px-4 py-3 rounded-xl font-medium transition-colors text-sm">
+            <a href="/" class="flex items-center gap-3 bg-white/20 px-4 py-3 rounded-xl font-medium transition-colors text-sm">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
                 Generator Soal
             </a>
         </nav>
-        
         <div class="px-4 pb-6 text-center">
-            <p class="text-xs text-indigo-300">Versi 1.1</p>
+            <p class="text-xs text-indigo-300">Versi 1.0</p>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- MAIN CONTENT -->
     <div class="flex-1 flex flex-col h-full overflow-hidden relative">
-        
-        <!-- TOP NAVBAR BERSIH DENGAN TOMBOL MENU -->
         <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 z-10 flex-shrink-0">
-            <!-- Tombol Buka Tutup Sidebar & Logo (HP) -->
             <div class="flex items-center gap-3">
                 <button onclick="toggleSidebar()" class="bg-indigo-600 text-white rounded-lg p-2 hover:bg-indigo-700 active:scale-95 transition-all shadow-sm cursor-pointer z-50">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
-                <img src="/logo.png" alt="Logo" class="h-8 w-auto md:hidden rounded-md bg-white p-1 shadow-sm border border-slate-100">
+                <!-- LOGO DIPERBAIKI (Spasi dihapus dan tanpa garis miring) -->
+                <img src="logo.png" alt="Logo" class="h-8 w-auto md:hidden rounded-md bg-white p-1 shadow-sm border border-slate-100">
                 <h1 class="text-lg font-bold text-slate-800 md:hidden">Bersoal</h1>
-            </div>
-
-            <!-- Header Title Desktop -->
-            <div class="hidden md:block">
-                <h2 class="text-slate-600 font-semibold text-sm">Ruang Kerja Utama</h2>
             </div>
         </header>
 
-        <!-- SCROLLABLE WORKSPACE -->
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
             <div class="max-w-4xl mx-auto">
-                <!-- FORM CARD -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    
-                    <!-- Header Form Profesional -->
                     <div class="px-6 py-6 sm:px-10 sm:py-8 border-b border-slate-200 bg-slate-50/50 flex flex-col gap-1">
                         <div class="flex items-center gap-3 mb-1">
                             <div class="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
@@ -77,94 +62,68 @@
                         <p class="text-slate-500 text-sm ml-4 sm:ml-4">Tentukan parameter di bawah ini untuk menghasilkan butir soal analitis sesuai kurikulum.</p>
                     </div>
 
-                    <!-- Form Body -->
                     <form action="/generate" method="POST" id="formSoal" class="p-6 sm:p-8 md:px-10 md:py-8 space-y-6">
-                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
                             <!-- Mata Pelajaran -->
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mata Pelajaran</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
-                                    </div>
-                                    <select id="mataPelajaran" name="mataPelajaran" onchange="updateMateri()" class="w-full pl-11 pr-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all appearance-none shadow-sm">
-                                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
-                                        <option value="Bahasa Inggris">Bahasa Inggris (English)</option>
-                                        <option value="Informatika" selected>Informatika</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
+                                <select id="mataPelajaran" name="mataPelajaran" onchange="updateMateri()" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
+                                    <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                    <option value="Bahasa Inggris">Bahasa Inggris (English)</option>
+                                    <option value="Informatika" selected>Informatika</option>
+                                </select>
                             </div>
 
                             <!-- Kelas -->
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kelas & Fase</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
-                                    </div>
-                                    <select id="jenjang" name="jenjang" onchange="updateMateri()" class="w-full pl-11 pr-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all appearance-none shadow-sm">
-                                        <option value="Kelas 10 (Fase E)">Kelas X (Fase E)</option>
-                                        <option value="Kelas 11 (Fase F)">Kelas XI (Fase F)</option>
-                                        <option value="Kelas 12 (Fase F)">Kelas XII (Fase F)</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
+                                <select id="jenjang" name="jenjang" onchange="updateMateri()" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
+                                    <option value="Kelas 10 (Fase E)">Kelas X (Fase E)</option>
+                                    <option value="Kelas 11 (Fase F)">Kelas XI (Fase F)</option>
+                                    <option value="Kelas 12 (Fase F)">Kelas XII (Fase F)</option>
+                                </select>
                             </div>
 
                             <!-- Jenis Soal -->
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jenis Soal</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                                    </div>
-                                    <select name="jenisSoal" class="w-full pl-11 pr-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all appearance-none shadow-sm">
-                                        <option value="Pilihan Ganda" selected>Pilihan Ganda</option>
-                                        <option value="Uraian">Uraian</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
+                                <select id="jenisSoal" name="jenisSoal" onchange="toggleJenisSoal()" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
+                                    <option value="Pilihan Ganda" selected>Pilihan Ganda</option>
+                                    <option value="Uraian">Uraian</option>
+                                    <option value="Campuran">Campuran (PG & Uraian)</option>
+                                </select>
                             </div>
 
-                            <!-- Jumlah Soal -->
-                            <div>
+                            <!-- Jumlah Soal Default (PG / Uraian saja) -->
+                            <div id="jumlahSoalGroup">
                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                    Jumlah Soal <span class="text-indigo-500 capitalize normal-case font-semibold text-[11px] ml-0.5">(Maks. 25)</span>
+                                    Jumlah Soal <span class="text-indigo-500 normal-case font-semibold text-[11px] ml-0.5">(Maks. 25)</span>
                                 </label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
-                                    </div>
-                                    <input type="number" name="jumlahSoal" min="1" max="25" value="5" required class="w-full pl-11 pr-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
-                                </div>
+                                <input type="number" id="jumlahSoal" name="jumlahSoal" min="1" max="25" value="5" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
+                            </div>
+                        </div>
+
+                        <!-- Opsi Tambahan untuk "Campuran" -->
+                        <div id="campuranGroup" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jumlah Pilihan Ganda</label>
+                                <input type="number" id="jumlahPG" name="jumlahPG" min="1" max="25" value="10" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Jumlah Uraian</label>
+                                <input type="number" id="jumlahUraian" name="jumlahUraian" min="1" max="10" value="5" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
                             </div>
                         </div>
 
                         <!-- Konteks Materi -->
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Konteks Materi Pembelajaran</label>
-                            <div class="relative">
-                                <div class="absolute top-3.5 left-0 pl-3.5 flex items-start pointer-events-none text-slate-400">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </div>
-                                <select id="materi" name="materi" class="w-full pl-11 pr-4 py-3.5 min-h-[60px] text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all appearance-none whitespace-normal shadow-sm">
-                                    <!-- Diisi otomatis oleh JavaScript -->
-                                </select>
-                                <div class="absolute top-4 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                            </div>
+                            <select id="materi" name="materi" class="w-full px-4 py-3.5 min-h-[60px] text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all whitespace-normal shadow-sm">
+                                <!-- Terisi otomatis -->
+                            </select>
                         </div>
                         
-                        <!-- Submit Button -->
                         <div class="pt-4">
                             <button type="submit" id="btnSubmit" class="w-full bg-slate-800 hover:bg-slate-900 active:scale-[0.99] text-white font-bold py-4 px-4 rounded-xl shadow-md transition-all text-sm flex justify-center items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
@@ -172,28 +131,14 @@
                             </button>
                         </div>
 
-                        <!-- Footer Info -->
-                        <div class="flex justify-center items-center gap-6 pt-2 text-[10px] sm:text-xs font-bold text-slate-400 tracking-wider">
-                            <div class="flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                METODE BLOOM REVISI
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                LEVEL KOGNITIF C4-C6
-                            </div>
-                        </div>
-
                         <!-- Loading State -->
                         <div id="loadingInfo" class="hidden flex-col items-center justify-center p-6 bg-slate-50 rounded-xl border border-slate-200">
                             <div class="animate-spin w-8 h-8 border-4 border-slate-800 border-t-transparent rounded-full mb-3"></div>
                             <p class="text-slate-800 font-bold text-sm text-center">Sistem Sedang Memproses...</p>
-                            <p class="text-slate-500 text-xs text-center mt-1">Mengonstruksi logika soal dan algoritma kunci jawaban berdasarkan parameter.</p>
+                            <p class="text-slate-500 text-xs text-center mt-1">Mengonstruksi soal dan merakit file PDF...</p>
                         </div>
                     </form>
                 </div>
-                
-                <div class="h-12"></div>
             </div>
         </main>
     </div>
@@ -202,82 +147,45 @@
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const backdrop = document.getElementById('sidebarBackdrop');
-        
         sidebar.classList.toggle('hidden');
         sidebar.classList.toggle('flex');
-        
-        if (window.innerWidth < 768) {
-            backdrop.classList.toggle('hidden');
+        if (window.innerWidth < 768) { backdrop.classList.toggle('hidden'); }
+    }
+
+    function toggleJenisSoal() {
+        const jenis = document.getElementById('jenisSoal').value;
+        const groupUtama = document.getElementById('jumlahSoalGroup');
+        const groupCampuran = document.getElementById('campuranGroup');
+        const inputUtama = document.getElementById('jumlahSoal');
+
+        if (jenis === 'Campuran') {
+            groupUtama.classList.add('hidden');
+            groupCampuran.classList.remove('hidden');
+            groupCampuran.classList.add('grid');
+            inputUtama.removeAttribute('required');
+        } else {
+            groupUtama.classList.remove('hidden');
+            groupCampuran.classList.add('hidden');
+            groupCampuran.classList.remove('grid');
+            inputUtama.setAttribute('required', 'true');
         }
     }
 
     const dataKurikulum = {
         "Bahasa Indonesia": {
-            "Kelas 10 (Fase E)": [
-                "Teks Laporan Hasil Observasi: Struktur dan kaidah teks",
-                "Teks Eksposisi: Analisis gagasan dan struktur",
-                "Teks Anekdot: Kritik sosial berbalut humor",
-                "Hikayat & Cerita Rakyat: Nilai-nilai dan karakteristik sastra klasik",
-                "Teks Negosiasi: Memahami proses kesepakatan",
-                "Biografi: Meneladani karakter tokoh",
-                "Puisi: Analisis unsur pembangun dan musikalisasi"
-            ],
-            "Kelas 11 (Fase F)": [
-                "Teks Prosedur: Langkah-langkah kegiatan",
-                "Teks Eksplanasi: Fenomena alam dan sosial",
-                "Ceramah: Informasi publik",
-                "Cerpen: Unsur intrinsik dan ekstrinsik",
-                "Proposal: Penyusunan proposal kegiatan",
-                "Karya Ilmiah: Sistematika laporan penelitian",
-                "Resensi: Penilaian terhadap sebuah karya"
-            ],
-            "Kelas 12 (Fase F)": [
-                "Surat Lamaran Pekerjaan: Kaidah penulisan",
-                "Teks Sejarah: Novel sejarah dan cerita ulang (recount)",
-                "Teks Editorial/Tajuk Rencana: Tajuk opini aktual",
-                "Artikel dan Kritik Sastra: Membaca dan menanggapi teks non-fiksi serta sastra",
-                "Drama: Pemahaman naskah dan pementasan"
-            ]
+            "Kelas 10 (Fase E)": ["Teks Laporan Hasil Observasi", "Teks Eksposisi", "Teks Anekdot", "Hikayat & Cerita Rakyat", "Teks Negosiasi", "Biografi", "Puisi"],
+            "Kelas 11 (Fase F)": ["Teks Prosedur", "Teks Eksplanasi", "Ceramah", "Cerpen", "Proposal", "Karya Ilmiah", "Resensi"],
+            "Kelas 12 (Fase F)": ["Surat Lamaran Pekerjaan", "Teks Sejarah", "Teks Editorial/Tajuk Rencana", "Artikel dan Kritik Sastra", "Drama"]
         },
         "Bahasa Inggris": {
-            "Kelas 10 (Fase E)": [
-                "Expression: Asking & Giving Permission, Opinion/Suggestion, Congratulation",
-                "Struktur Teks: Descriptive, Recount, and Narrative Text (Fiction/dongeng)",
-                "Tata Bahasa (Grammar): Simple Present Tense, Simple Past Tense, and Pronouns"
-            ],
-            "Kelas 11 (Fase F)": [
-                "Expression: Menyatakan pendapat pribadi dan membahas isu aktual",
-                "Struktur Teks: Analytical Exposition, Hortatory Exposition, and Procedure Text",
-                "Tata Bahasa (Grammar): Passive Voice, Conditional Sentences, Cause and Effect"
-            ],
-            "Kelas 12 (Fase F)": [
-                "Functional: Menulis Surat Lamaran Pekerjaan (Application Letter) dan Curriculum Vitae (CV)",
-                "Struktur Teks: News Item Text (Berita) dan Explanation Text (Fenomena)",
-                "Tata Bahasa (Grammar): Direct and Indirect Speech, Causative Verbs, Adjective Clause"
-            ]
+            "Kelas 10 (Fase E)": ["Descriptive, Recount, and Narrative Text", "Grammar: Simple Present, Past Tense, Pronouns"],
+            "Kelas 11 (Fase F)": ["Analytical Exposition, Hortatory Exposition, Procedure", "Grammar: Passive Voice, Conditional Sentences"],
+            "Kelas 12 (Fase F)": ["Application Letter & CV", "News Item & Explanation Text", "Grammar: Direct/Indirect Speech, Causative Verbs"]
         },
         "Informatika": {
-            "Kelas 10 (Fase E)": [
-                "Berpikir Komputasional: Logika Pencarian (Search), Pengurutan (Sort), Stack, dan Queue",
-                "Sistem Komputer: Interaksi hardware, software, dan brainware",
-                "Jaringan Komputer dan Internet: Topologi jaringan, proteksi data, enkripsi dasar",
-                "Algoritma dan Pemrograman: Variabel, tipe data, dan struktur kontrol (Logika Dasar)",
-                "Analisis Data: Pengumpulan, pengolahan, dan visualisasi data dasar"
-            ],
-            "Kelas 11 (Fase F)": [
-                "Berpikir Komputasional Lanjut: Strategi algoritmik dan pemrograman dinamis",
-                "Algoritma dan Pemrograman: Tipe data Array, fungsi, dan rekursi",
-                "Jaringan Komputer Lanjut: Arsitektur jaringan dan dasar Keamanan Siber (Cybersecurity)",
-                "Analisis Data Lanjut: Pengenalan Basis Data (SQL) dan pemodelan data",
-                "Pengembangan Aplikasi: Siklus hidup pengembangan perangkat lunak (SDLC)"
-            ],
-            "Kelas 12 (Fase F)": [
-                "Kecerdasan Buatan (AI): Konsep dasar, machine learning, dan implementasi logika",
-                "Internet of Things (IoT): Arsitektur dasar, sensor, dan sistem otomatisasi",
-                "Big Data dan Cloud Computing: Konsep penyimpanan dan pemrosesan awan",
-                "Keamanan Informasi: Kriptografi lanjut, HAKI, dan etika digital",
-                "Praktik Lintas Bidang: Perancangan sistem teknologi terintegrasi (Project-Based)"
-            ]
+            "Kelas 10 (Fase E)": ["Berpikir Komputasional", "Sistem Komputer", "Jaringan Komputer dan Internet", "Algoritma dan Pemrograman (Logika Dasar)", "Analisis Data"],
+            "Kelas 11 (Fase F)": ["Strategi Algoritmik", "Array, Fungsi, Rekursi", "Arsitektur Jaringan & Cybersecurity", "Basis Data (SQL)", "Siklus Pengembangan (SDLC)"],
+            "Kelas 12 (Fase F)": ["Kecerdasan Buatan (AI)", "Internet of Things (IoT)", "Big Data & Cloud Computing", "Kriptografi & Keamanan Informasi", "Project-Based Praktik Lintas Bidang"]
         }
     };
 
@@ -287,8 +195,7 @@
         const materiDropdown = document.getElementById("materi");
         materiDropdown.innerHTML = "";
         
-        const daftarMateri = dataKurikulum[mataPelajaran][jenjang];
-        daftarMateri.forEach(materi => {
+        dataKurikulum[mataPelajaran][jenjang].forEach(materi => {
             const opsi = document.createElement("option");
             opsi.value = materi;
             opsi.textContent = materi;
@@ -296,7 +203,10 @@
         });
     }
 
-    window.onload = updateMateri;
+    window.onload = () => {
+        updateMateri();
+        toggleJenisSoal();
+    };
 
     document.getElementById('formSoal').addEventListener('submit', function() {
         document.getElementById('btnSubmit').classList.add('hidden');
