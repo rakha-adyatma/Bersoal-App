@@ -59,13 +59,18 @@ function parseGeminiJson(raw) {
   }
 }
 
-const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+const MODELS = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.0-flash", "gemini-2.0-flash-lite"];
 
 async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal, jumlahPG, jumlahUraian }) {
   judulSoal = String(judulSoal || "Evaluasi HOTS").trim();
   mataPelajaran = String(mataPelajaran || "Umum").trim();
   
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.includes("KODE_API_GEMINI")) {
+    throw new Error("GEMINI_API_KEY belum diatur atau tidak valid di file .env / Vercel Environment Variables. Silakan dapatkan API Key di https://aistudio.google.com/app/apikey");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
   const MAX_PER_BATCH = 8;
 
   const generateSpecificType = async (typeLabel, totalRequired) => {
@@ -81,12 +86,22 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
     const fetchBatch = async (batchSize) => {
       const prompt = buildUserPrompt(mataPelajaran, deskripsi, typeLabel, batchSize);
       let parsed = null;
+      let lastError = null;
+      let quotaExceeded = false;
+      let invalidKey = false;
 
       outer: for (const name of MODELS) {
-        const model = genAI.getGenerativeModel({
-          model: name, systemInstruction: SYSTEM_PROMPT,
-          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 },
-        });
+        const modelOptions = {
+          model: name,
+          systemInstruction: SYSTEM_PROMPT,
+          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 }
+        };
+
+        if (apiKey.startsWith("AQ.")) {
+          modelOptions.requestOptions = { customHeaders: { 'x-goog-api-key': apiKey } };
+        }
+
+        const model = genAI.getGenerativeModel(modelOptions);
 
         for (let attempt = 0; attempt < 2; attempt++) {
           try {
@@ -94,10 +109,26 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
             parsed = parseGeminiJson(result.response.text());
             if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) break outer;
             parsed = null;
-          } catch (e) { parsed = null; }
+          } catch (e) {
+            const errMsg = e.message || String(e);
+            console.error(`Error dengan model ${name} (percobaan ${attempt + 1}):`, errMsg);
+            lastError = errMsg;
+            if (errMsg.includes("Quota exceeded") || errMsg.includes("429")) quotaExceeded = true;
+            if (errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) invalidKey = true;
+            parsed = null;
+          }
         }
       }
-      if (!parsed || !parsed.soal) throw new Error(`Gagal memproses batch soal ${typeLabel}`);
+
+      if (!parsed || !parsed.soal) {
+        if (invalidKey) {
+          throw new Error("API Key Gemini tidak valid. Silakan periksa GEMINI_API_KEY di .env atau Vercel Environment Variables.");
+        }
+        if (quotaExceeded) {
+          throw new Error("Batas kuota gratis Gemini API terlampaui (Rate Limit / Quota Exceeded). Silakan tunggu 20 detik dan coba lagi.");
+        }
+        throw new Error(`Gagal memproses soal ${typeLabel}: ${lastError || 'Tidak ada respons dari AI'}`);
+      }
       
       parsed.soal.forEach(q => q.tipeSpesifik = typeLabel);
       return parsed.soal;
@@ -143,7 +174,8 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
     return { judul: judulSoal, mataPelajaran, jenisSoal, soal: semuaSoal };
 
   } catch (error) {
-    throw new Error("Sistem AI gagal memproses keseluruhan soal. Silakan coba lagi.");
+    console.error("Overall generateHotsQuestions Error:", error.message || error);
+    throw error;
   }
 }
 
