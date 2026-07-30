@@ -36,6 +36,30 @@ Sistem ini memfasilitasi pembuatan soal secara dinamis dalam bentuk Lembar Soal 
 *   **Environment Management:** Dotenv (`dotenv`)
 *   **Deployment:** Vercel (Serverless Functions)
 
+## Panduan Instalasi
+1. Clone repositori ini:
+   ```bash
+   git clone https://github.com/rakha-adyatma/Bersoal-App.git
+   cd Bersoal-App
+   ```
+
+2. Instalasi dependensi:
+   ```bash
+   npm install
+   ```
+
+3. Konfigurasi Environment Variables:
+   Buat file bernama `.env` pada direktori *root* aplikasi dan tambahkan konfigurasi berikut:
+   ```env
+   GEMINI_API_KEY=KODE_API_GEMINI_ANDA_DI_SINI
+   PORT=3000
+   ```
+
+4. Menjalankan server lokal:
+   ```bash
+   npm start
+   ```
+
 ## Cakupan Kurikulum & Materi
 
 Saat ini, BERSOAL difokuskan pada penyusunan materi dari Fase E (Kelas 10) hingga Fase F (Kelas 11 & 12) untuk mendukung berbagai mata pelajaran:

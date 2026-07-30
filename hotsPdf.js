@@ -1,7 +1,14 @@
 const PDFDocument = require('pdfkit');
 const path = require('path');
+const fs = require('fs');
 
 function getFonts() {
+  const fontDir = path.join(__dirname, 'assets', 'fonts');
+  const normalPath = path.join(fontDir, 'DejaVuSans.ttf');
+  const boldPath = path.join(fontDir, 'DejaVuSans-Bold.ttf');
+  if (fs.existsSync(normalPath) && fs.existsSync(boldPath)) {
+    return { normal: normalPath, bold: boldPath };
+  }
   return {
     normal: path.join(process.cwd(), 'assets', 'fonts', 'DejaVuSans.ttf'),
     bold: path.join(process.cwd(), 'assets', 'fonts', 'DejaVuSans-Bold.ttf')

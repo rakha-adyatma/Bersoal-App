@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const zlib = require('zlib');
 const { generateHotsQuestions, JENIS_VALID } = require('./hotsGenerator');
 const { buildPdfSoal, buildPdfKunci } = require('./hotsPdf');
 
@@ -11,6 +12,26 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const generatedDataStore = {};
+
+function encodeDataToken(data) {
+  try {
+    return zlib.deflateRawSync(Buffer.from(JSON.stringify(data))).toString('base64url');
+  } catch (err) {
+    console.error("Gagal kompresi data:", err);
+    return "";
+  }
+}
+
+function decodeDataToken(token) {
+  try {
+    if (!token) return null;
+    const decompressed = zlib.inflateRawSync(Buffer.from(token, 'base64url')).toString();
+    return JSON.parse(decompressed);
+  } catch (err) {
+    console.error("Gagal dekompresi data token:", err);
+    return null;
+  }
+}
 
 app.post('/generate', async (req, res) => {
   try {
@@ -33,6 +54,9 @@ app.post('/generate', async (req, res) => {
     });
     const timestamp = Date.now();
     generatedDataStore[timestamp] = hotsData;
+    const token = encodeDataToken(hotsData);
+    const queryParam = token ? `?token=${encodeURIComponent(token)}` : '';
+
     const successHtml = `
     <!DOCTYPE html>
     <html lang="id">
@@ -82,11 +106,11 @@ app.post('/generate', async (req, res) => {
                     <p class="text-slate-500 mb-8 text-sm">Instrumen evaluasi <strong>${mataPelajaran}</strong> telah berhasil diracik dan disesuaikan dengan standar HOTS.</p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="/download/soal/${timestamp}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
+                        <a href="/download/soal/${timestamp}${queryParam}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                             Unduh PDF Lembar Soal
                         </a>
-                        <a href="/download/kunci/${timestamp}" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
+                        <a href="/download/kunci/${timestamp}${queryParam}" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                             Unduh PDF Kunci Jawaban
                         </a>
@@ -116,36 +140,41 @@ app.post('/generate', async (req, res) => {
 });
 
 app.get('/download/soal/:id', async (req, res) => {
-  const data = generatedDataStore[req.params.id];
+  const data = decodeDataToken(req.query.token) || generatedDataStore[req.params.id];
   if (!data) return res.status(404).send("Data tidak ditemukan atau kedaluwarsa.");
 
   try {
     const doc = buildPdfSoal(data);
     res.setHeader('Content-Type', 'application/pdf');
-    // SYNTAX YANG DIPERBAIKI (Hilangkan backslash sebelum backtick)
-    res.setHeader('Content-Disposition', `attachment; filename="HOTS_SOAL_${data.mataPelajaran.replace(/\s/g, '_')}_${req.params.id}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="HOTS_SOAL_${(data.mataPelajaran || 'SOAL').replace(/\s/g, '_')}_${req.params.id}.pdf"`);
     doc.pipe(res);
     doc.end();
   } catch (e) {
+    console.error(e);
     res.status(500).send("Gagal membuat PDF soal.");
   }
 });
 
 app.get('/download/kunci/:id', async (req, res) => {
-  const data = generatedDataStore[req.params.id];
+  const data = decodeDataToken(req.query.token) || generatedDataStore[req.params.id];
   if (!data) return res.status(404).send("Data tidak ditemukan atau kedaluwarsa.");
 
   try {
     const doc = buildPdfKunci(data);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="HOTS_KUNCI_${data.mataPelajaran.replace(/\s/g, '_')}_${req.params.id}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="HOTS_KUNCI_${(data.mataPelajaran || 'KUNCI').replace(/\s/g, '_')}_${req.params.id}.pdf"`);
     doc.pipe(res);
     doc.end();
   } catch (e) {
+    console.error(e);
     res.status(500).send("Gagal membuat PDF kunci jawaban.");
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
-});
+module.exports = app;
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server berjalan di http://localhost:${PORT}`);
+  });
+}

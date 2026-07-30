@@ -59,7 +59,7 @@ function parseGeminiJson(raw) {
   }
 }
 
-const MODELS = ["gemini-3.1-flash-lite", "gemini-flash-latest"];
+const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
 async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal, jumlahPG, jumlahUraian }) {
   judulSoal = String(judulSoal || "Evaluasi HOTS").trim();
