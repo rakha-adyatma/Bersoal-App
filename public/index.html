@@ -86,29 +86,43 @@
                     <form action="/generate" method="POST" id="formSoal" class="p-6 sm:p-8 md:px-10 md:py-8 space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             
+                            <!-- 1. PILIH JENJANG / KELAS -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Mata Pelajaran</label>
-                                <select id="mataPelajaran" name="mataPelajaran" onchange="updateMateri()" required class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
-                                    <option value="" disabled selected>-- Pilih Mata Pelajaran --</option>
-                                    <option value="Bahasa Indonesia">Bahasa Indonesia</option>
-                                    <option value="Bahasa Inggris">Bahasa Inggris (English)</option>
-                                    <option value="Matematika">Matematika</option>
-                                    <option value="Informatika">Informatika</option>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    1. Jenjang / Kelas
+                                </label>
+                                <select id="jenjang" name="jenjang" onchange="onJenjangChange()" required class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
+                                    <option value="" disabled selected>-- Pilih Jenjang / Kelas --</option>
+                                    <option value="Kelas X">Kelas X</option>
+                                    <option value="Kelas XI">Kelas XI</option>
                                 </select>
                             </div>
 
+                            <!-- 2. PILIH JURUSAN / KONSENTRASI KEAHLIAN -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Kelas & Fase</label>
-                                <select id="jenjang" name="jenjang" onchange="updateMateri()" required class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
-                                    <option value="" disabled selected>-- Pilih Kelas & Fase --</option>
-                                    <option value="Kelas 10 (Fase E)">Kelas X (Fase E)</option>
-                                    <option value="Kelas 11 (Fase F)">Kelas XI (Fase F)</option>
-                                    <option value="Kelas 12 (Fase F)">Kelas XII (Fase F)</option>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    2. Konsentrasi Keahlian / Jurusan
+                                </label>
+                                <select id="jurusan" name="jurusan" onchange="onJurusanChange()" required disabled class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <option value="" disabled selected>-- Pilih Jenjang Terlebih Dahulu --</option>
                                 </select>
                             </div>
 
+                            <!-- 3. PILIH MATA PELAJARAN -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Jenis Soal</label>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    3. Mata Pelajaran
+                                </label>
+                                <select id="mataPelajaran" name="mataPelajaran" required disabled class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <option value="" disabled selected>-- Pilih Jurusan Terlebih Dahulu --</option>
+                                </select>
+                            </div>
+
+                            <!-- 4. PILIH JENIS SOAL -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    4. Jenis / Tipe Soal
+                                </label>
                                 <select id="jenisSoal" name="jenisSoal" onchange="toggleJenisSoal()" required class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
                                     <option value="" disabled selected>-- Pilih Jenis Soal --</option>
                                     <option value="Pilihan Ganda">Pilihan Ganda</option>
@@ -117,7 +131,8 @@
                                 </select>
                             </div>
 
-                            <div id="jumlahSoalGroup" class="hidden">
+                            <!-- JUMLAH SOAL (UNTUK PG ATAU URAIAN SAJA) -->
+                            <div id="jumlahSoalGroup" class="hidden md:col-span-2">
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                                     Jumlah Soal <span class="text-indigo-500 dark:text-indigo-400 normal-case font-semibold text-[11px] ml-0.5">(Maks. 25)</span>
                                 </label>
@@ -125,6 +140,7 @@
                             </div>
                         </div>
 
+                        <!-- JUMLAH SOAL CAMPURAN -->
                         <div id="campuranGroup" class="hidden gap-6 bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-200 dark:border-slate-600 transition-colors">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Jumlah Pilihan Ganda</label>
@@ -136,10 +152,19 @@
                             </div>
                         </div>
 
+                        <!-- 5. CAKUPAN MATERI PEMBELAJARAN (TEXT INPUT / TEXTAREA) -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Konteks Materi Pembelajaran</label>
-                            <select id="materi" name="materi" required class="w-full px-4 py-3.5 min-h-[60px] text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all whitespace-normal shadow-sm">
-                            </select>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    5. Cakupan Materi Pembelajaran
+                                </label>
+                                <span class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Dapat memasukkan lebih dari satu materi</span>
+                            </div>
+                            <textarea id="materi" name="materi" rows="3" required placeholder="Tuliskan pokok bahasan atau beberapa materi yang ingin dimasukkan dalam soal...&#10;Contoh: Sistem Kelistrikan Body, Prinsip Kerja Starter, dan Analisis Kerusakan Alternator (Pisahkan dengan koma atau baris baru)" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm placeholder-slate-400 dark:placeholder-slate-500 resize-none"></textarea>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                AI akan mengonstruksi stimulus studi kasus otentik sesuai materi dan jurusan yang dipilih.
+                            </p>
                         </div>
                         
                         <div class="pt-4">
@@ -227,62 +252,180 @@
         }
     }
 
-    const dataKurikulum = {
-        "Bahasa Indonesia": {
-            "Kelas 10 (Fase E)": ["Teks Laporan Hasil Observasi", "Teks Eksposisi", "Teks Anekdot", "Hikayat & Cerita Rakyat", "Teks Negosiasi", "Biografi", "Puisi"],
-            "Kelas 11 (Fase F)": ["Teks Prosedur", "Teks Eksplanasi", "Ceramah", "Cerpen", "Proposal", "Karya Ilmiah", "Resensi"],
-            "Kelas 12 (Fase F)": ["Surat Lamaran Pekerjaan", "Teks Sejarah", "Teks Editorial/Tajuk Rencana", "Artikel dan Kritik Sastra", "Drama"]
+    const kurikulumSMK = {
+        "Kelas X": {
+            "TKR (Teknik Kendaraan Ringan)": [
+                "Pendidikan Agama dan Budi Pekerti",
+                "Informatika",
+                "KKA",
+                "Bahasa Inggris",
+                "PJOK",
+                "Matematika",
+                "Bahasa Daerah",
+                "Seni Budaya",
+                "Sejarah",
+                "Bahasa Indonesia",
+                "IPAS",
+                "Pendidikan Pancasila",
+                "Dasar Program Keahlian"
+            ],
+            "TKJ (Teknik Komputer dan Jaringan)": [
+                "Pendidikan Agama dan Budi Pekerti",
+                "Informatika",
+                "KKA",
+                "Bahasa Inggris",
+                "PJOK",
+                "Matematika",
+                "Bahasa Daerah",
+                "Seni Budaya",
+                "Sejarah",
+                "Bahasa Indonesia",
+                "IPAS",
+                "Pendidikan Pancasila",
+                "Dasar Program Keahlian"
+            ],
+            "DKV (Desain Komunikasi Visual)": [
+                "Pendidikan Agama dan Budi Pekerti",
+                "Informatika",
+                "KKA",
+                "Bahasa Inggris",
+                "PJOK",
+                "Matematika",
+                "Bahasa Daerah",
+                "Seni Budaya",
+                "Sejarah",
+                "Bahasa Indonesia",
+                "IPAS",
+                "Pendidikan Pancasila",
+                "Dasar Program Keahlian"
+            ],
+            "AK (Akuntansi)": [
+                "Pendidikan Agama dan Budi Pekerti",
+                "Informatika",
+                "KKA",
+                "Bahasa Inggris",
+                "PJOK",
+                "Matematika",
+                "Bahasa Daerah",
+                "Seni Budaya",
+                "Sejarah",
+                "Bahasa Indonesia",
+                "IPAS",
+                "Pendidikan Pancasila",
+                "Dasar Program Keahlian"
+            ]
         },
-        "Bahasa Inggris": {
-            "Kelas 10 (Fase E)": ["Descriptive, Recount, and Narrative Text", "Grammar: Simple Present, Past Tense, Pronouns"],
-            "Kelas 11 (Fase F)": ["Analytical Exposition, Hortatory Exposition, Procedure", "Grammar: Passive Voice, Conditional Sentences"],
-            "Kelas 12 (Fase F)": ["Application Letter & CV", "News Item & Explanation Text", "Grammar: Direct/Indirect Speech, Causative Verbs"]
-        },
-        "Matematika": {
-            "Kelas 10 (Fase E)": ["Eksponen dan Logaritma", "Barisan dan Deret", "Sistem Persamaan Linear", "Fungsi Kuadrat", "Statistika Dasar", "Trigonometri Dasar"],
-            "Kelas 11 (Fase F)": ["Matriks", "Fungsi Komposisi & Invers", "Lingkaran", "Transformasi Geometri", "Statistika Lanjut (Data Kelompok)", "Peluang"],
-            "Kelas 12 (Fase F)": ["Limit Fungsi Aljabar & Trigonometri", "Turunan Fungsi", "Integral Tak Tentu & Tentu", "Geometri Ruang (Dimensi Tiga)"]
-        },
-        "Informatika": {
-            "Kelas 10 (Fase E)": ["Berpikir Komputasional", "Sistem Komputer", "Jaringan Komputer dan Internet", "Algoritma dan Pemrograman (Logika Dasar)", "Analisis Data"],
-            "Kelas 11 (Fase F)": ["Strategi Algoritmik", "Array, Fungsi, Rekursi", "Arsitektur Jaringan & Cybersecurity", "Basis Data (SQL)", "Siklus Pengembangan (SDLC)"],
-            "Kelas 12 (Fase F)": ["Kecerdasan Buatan (AI)", "Internet of Things (IoT)", "Big Data & Cloud Computing", "Kriptografi & Keamanan Informasi", "Project-Based Praktik Lintas Bidang"]
+        "Kelas XI": {
+            "TKR (Teknik Kendaraan Ringan)": [
+                "Bahasa Daerah",
+                "Sejarah",
+                "Pendidikan Pancasila",
+                "Pendidikan Agama dan Budi Pekerti",
+                "Teknik Kendaraan Ringan",
+                "TSM",
+                "Bahasa Indonesia",
+                "PJOK",
+                "Matematika",
+                "Bahasa Inggris",
+                "KIK"
+            ],
+            "TKJ (Teknik Komputer dan Jaringan)": [
+                "Bahasa Inggris",
+                "KIK",
+                "Bahasa Daerah",
+                "Sejarah",
+                "Pendidikan Pancasila",
+                "Teknik Komputer dan Jaringan",
+                "PJOK",
+                "Matematika",
+                "Pendidikan Agama dan Budi Pekerti",
+                "Otomasi Industri",
+                "Bahasa Indonesia"
+            ],
+            "DKV (Desain Komunikasi Visual)": [
+                "Bahasa Inggris",
+                "KIK",
+                "Bahasa Daerah",
+                "Sejarah",
+                "Pendidikan Pancasila",
+                "Desain Komunikasi Visual",
+                "Bisnis Digital",
+                "Bahasa Indonesia",
+                "Pendidikan Agama dan Budi Pekerti",
+                "PJOK",
+                "Matematika"
+            ],
+            "AK (Akuntansi)": [
+                "Bahasa Daerah",
+                "Sejarah",
+                "Pendidikan Pancasila",
+                "Pendidikan Agama dan Budi Pekerti",
+                "Akuntansi",
+                "PJOK",
+                "Matematika",
+                "Layanan Perbankan",
+                "Bahasa Indonesia",
+                "Bahasa Inggris",
+                "KIK"
+            ]
         }
     };
 
-    function updateMateri() {
-        const mataPelajaran = document.getElementById("mataPelajaran").value;
+    const daftarJurusan = [
+        { value: "TKR (Teknik Kendaraan Ringan)", label: "TKR — Teknik Kendaraan Ringan" },
+        { value: "TKJ (Teknik Komputer dan Jaringan)", label: "TKJ — Teknik Komputer dan Jaringan" },
+        { value: "DKV (Desain Komunikasi Visual)", label: "DKV — Desain Komunikasi Visual" },
+        { value: "AK (Akuntansi)", label: "AK — Akuntansi" }
+    ];
+
+    function onJenjangChange() {
         const jenjang = document.getElementById("jenjang").value;
-        const materiDropdown = document.getElementById("materi");
-        materiDropdown.innerHTML = "";
-        
-        if (!mataPelajaran || !jenjang) {
-            const opsiTunggu = document.createElement("option");
-            opsiTunggu.value = "";
-            opsiTunggu.textContent = "-- Pilih Mapel & Kelas Terlebih Dahulu --";
-            opsiTunggu.disabled = true;
-            opsiTunggu.selected = true;
-            materiDropdown.appendChild(opsiTunggu);
+        const jurusanEl = document.getElementById("jurusan");
+        const mapelEl = document.getElementById("mataPelajaran");
+
+        jurusanEl.innerHTML = '<option value="" disabled selected>-- Pilih Jurusan / Keahlian --</option>';
+        mapelEl.innerHTML = '<option value="" disabled selected>-- Pilih Jurusan Terlebih Dahulu --</option>';
+        mapelEl.disabled = true;
+
+        if (!jenjang) {
+            jurusanEl.disabled = true;
             return;
         }
 
-        const opsiPilih = document.createElement("option");
-        opsiPilih.value = "";
-        opsiPilih.textContent = "-- Pilih Materi Pembelajaran --";
-        opsiPilih.disabled = true;
-        opsiPilih.selected = true;
-        materiDropdown.appendChild(opsiPilih);
-
-        dataKurikulum[mataPelajaran][jenjang].forEach(materi => {
-            const opsi = document.createElement("option");
-            opsi.value = materi;
-            opsi.textContent = materi;
-            materiDropdown.appendChild(opsi);
+        daftarJurusan.forEach(j => {
+            const opt = document.createElement("option");
+            opt.value = j.value;
+            opt.textContent = j.label;
+            jurusanEl.appendChild(opt);
         });
+
+        jurusanEl.disabled = false;
+    }
+
+    function onJurusanChange() {
+        const jenjang = document.getElementById("jenjang").value;
+        const jurusan = document.getElementById("jurusan").value;
+        const mapelEl = document.getElementById("mataPelajaran");
+
+        mapelEl.innerHTML = '<option value="" disabled selected>-- Pilih Mata Pelajaran --</option>';
+
+        if (!jenjang || !jurusan || !kurikulumSMK[jenjang] || !kurikulumSMK[jenjang][jurusan]) {
+            mapelEl.disabled = true;
+            return;
+        }
+
+        kurikulumSMK[jenjang][jurusan].forEach(mapel => {
+            const opt = document.createElement("option");
+            opt.value = mapel;
+            opt.textContent = mapel;
+            mapelEl.appendChild(opt);
+        });
+
+        mapelEl.disabled = false;
     }
 
     window.onload = () => {
-        updateMateri();
+        onJenjangChange();
         toggleJenisSoal();
     };
 

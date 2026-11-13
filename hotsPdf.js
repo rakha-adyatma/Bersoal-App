@@ -21,8 +21,14 @@ function cetakHeader(doc, data, fonts, isKunci = false) {
   doc.moveDown(0.5);
   
   doc.font(fonts.normal).fontSize(10);
-  doc.text(`Mata Pelajaran    : ${data.mataPelajaran}`);
-  doc.text(`Tipe Asesmen      : ${data.jenisSoal}`);
+  doc.text(`Mata Pelajaran      : ${data.mataPelajaran}`);
+  if (data.jenjang) {
+    doc.text(`Tingkat / Kelas     : ${data.jenjang}`);
+  }
+  if (data.jurusan) {
+    doc.text(`Konsentrasi Keahlian: ${data.jurusan}`);
+  }
+  doc.text(`Tipe Asesmen        : ${data.jenisSoal}`);
   
   const y = doc.y + 5;
   doc.moveTo(50, y).lineTo(545, y).lineWidth(1).strokeColor('#000000').stroke();

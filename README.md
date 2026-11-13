@@ -60,13 +60,15 @@ Sistem ini memfasilitasi pembuatan soal secara dinamis dalam bentuk Lembar Soal 
    npm start
    ```
 
-## Cakupan Kurikulum & Materi
+## Cakupan Kurikulum & Kejuruan (SMK)
 
-Saat ini, BERSOAL difokuskan pada penyusunan materi dari Fase E (Kelas 10) hingga Fase F (Kelas 11 & 12) untuk mendukung berbagai mata pelajaran:
-- **Bahasa Indonesia:** Teks Laporan Hasil Observasi, Eksposisi, Anekdot, Hikayat, Prosedur, Eksplanasi, Proposal, Karya Ilmiah, dll.
-- **Bahasa Inggris:** Descriptive/Recount Text, Analytical Exposition, Application Letter & CV, News Item, Grammar Rules.
-- **Matematika:** Eksponen & Logaritma, Barisan & Deret, Matriks, Fungsi Komposisi, Transformasi Geometri, Turunan & Integral.
-- **Informatika:** Berpikir Komputasional, Algoritma & Pemrograman, Basis Data (SQL), Keamanan Siber (Cybersecurity), Kecerdasan Buatan (AI).
+BERSOAL mendukung penyusunan instrumen asesmen analitis berbasis kompetensi kejuruan SMK pada jenjang **Kelas X** dan **Kelas XI** dengan 4 Konsentrasi Keahlian utama:
+- **TKR (Teknik Kendaraan Ringan):** Meliputi mata pelajaran umum dan kejuruan (Dasar Program Keahlian, Teknik Kendaraan Ringan, TSM, dll).
+- **TKJ (Teknik Komputer dan Jaringan):** Meliputi Dasar Program Keahlian, Teknik Komputer dan Jaringan, Otomasi Industri, KIK, Informatika, dll.
+- **DKV (Desain Komunikasi Visual):** Meliputi Dasar Program Keahlian, Desain Komunikasi Visual, Bisnis Digital, KIK, Seni Budaya, dll.
+- **AK (Akuntansi):** Meliputi Dasar Program Keahlian, Akuntansi, Layanan Perbankan, KIK, Matematika, dll.
+
+Pendidik dapat secara fleksibel memasukkan beberapa topik/materi spesifik sesuai silabus dan capaian pembelajaran (CP) modul ajar masing-masing.
 
 ## Kontribusi
 

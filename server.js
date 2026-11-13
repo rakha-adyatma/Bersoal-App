@@ -35,16 +35,19 @@ function decodeDataToken(token) {
 
 app.post('/generate', async (req, res) => {
   try {
-    const { mataPelajaran, jenjang, jenisSoal, materi, jumlahSoal, jumlahPG, jumlahUraian } = req.body;
+    const { mataPelajaran, jenjang, jurusan, jenisSoal, materi, jumlahSoal, jumlahPG, jumlahUraian } = req.body;
 
     if (!JENIS_VALID.includes(jenisSoal)) {
       return res.status(400).send("Jenis soal tidak valid.");
     }
 
-    const judulSoal = `Soal HOTS ${mataPelajaran} - ${jenjang}`;
-    const deskripsiMateri = `Materi: ${materi} untuk ${jenjang}`;
+    const jurusanInfo = jurusan ? ` - ${jurusan}` : '';
+    const judulSoal = `Soal HOTS ${mataPelajaran} - ${jenjang}${jurusanInfo}`;
+    const deskripsiMateri = String(materi || "").trim();
     const hotsData = await generateHotsQuestions({
       mataPelajaran,
+      jenjang,
+      jurusan,
       judulSoal,
       deskripsi: deskripsiMateri,
       jenisSoal,
@@ -103,7 +106,8 @@ app.post('/generate', async (req, res) => {
                         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <h2 class="text-2xl font-bold text-slate-800 mb-2">Penyusunan Sukses!</h2>
-                    <p class="text-slate-500 mb-8 text-sm">Instrumen evaluasi <strong>${mataPelajaran}</strong> telah berhasil diracik dan disesuaikan dengan standar HOTS.</p>
+                    <p class="text-slate-500 mb-2 text-sm">Instrumen evaluasi <strong>${mataPelajaran}</strong> telah berhasil diracik dan disesuaikan dengan standar HOTS.</p>
+                    <p class="text-xs text-indigo-600 font-semibold mb-6">${jenjang}${jurusan ? ' &bull; ' + jurusan : ''}</p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <a href="/download/soal/${timestamp}${queryParam}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
@@ -145,8 +149,9 @@ app.get('/download/soal/:id', async (req, res) => {
 
   try {
     const doc = buildPdfSoal(data);
+    const sanitizedTitle = (data.mataPelajaran || 'SOAL').replace(/[^a-zA-Z0-9_-]/g, '_');
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="HOTS_SOAL_${(data.mataPelajaran || 'SOAL').replace(/\s/g, '_')}_${req.params.id}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="HOTS_SOAL_${sanitizedTitle}_${req.params.id}.pdf"`);
     doc.pipe(res);
     doc.end();
   } catch (e) {
@@ -161,8 +166,9 @@ app.get('/download/kunci/:id', async (req, res) => {
 
   try {
     const doc = buildPdfKunci(data);
+    const sanitizedTitle = (data.mataPelajaran || 'KUNCI').replace(/[^a-zA-Z0-9_-]/g, '_');
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="HOTS_KUNCI_${(data.mataPelajaran || 'KUNCI').replace(/\s/g, '_')}_${req.params.id}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="HOTS_KUNCI_${sanitizedTitle}_${req.params.id}.pdf"`);
     doc.pipe(res);
     doc.end();
   } catch (e) {

@@ -10,23 +10,37 @@ ATURAN MUTLAK:
 3. Distraktor Logis: Opsi pengecoh harus logis berdasarkan kemungkinan miskonsepsi siswa.
 4. Output JSON Murni: Jangan gunakan backticks markdown, berikan hanya objek JSON valid. Gunakan "\\n" untuk pindah baris.`;
 
-function buildUserPrompt(mataPelajaran, deskripsi, jenisSoalType, batchSize) {
-  let spesifikMapel = "";
-  if (mataPelajaran === "Informatika") {
-    spesifikMapel = "Stimulus kasus IT otentik (jaringan, IoT, AI, algoritma sosmed).";
-  } else if (mataPelajaran === "Bahasa Inggris") {
-    spesifikMapel = "Soal WAJIB Bahasa Inggris. Uji 'implied meaning'. Pakai kutipan nyata (sertakan Title, Author).";
-  } else if (mataPelajaran === "Matematika") {
-    spesifikMapel = "Stimulus WAJIB berupa masalah kontekstual (ekonomi, sains, teknik, atau keseharian). Uji kemampuan pemodelan dan penalaran matematis, BUKAN sekadar hitungan langsung.";
+function buildUserPrompt(mataPelajaran, jenjang, jurusan, deskripsi, jenisSoalType, batchSize) {
+  let spesifikKonteks = "";
+  if (jurusan && jurusan.includes("TKR")) {
+    spesifikKonteks = "Kaitkan stimulus secara kuat dengan dunia Teknik Kendaraan Ringan, prosedur bengkel/SOP otomotif, investigasi troubleshooting mesin, sistem kelistrikan kendaraan, transmisi, atau sasis.";
+  } else if (jurusan && jurusan.includes("TKJ")) {
+    spesifikKonteks = "Kaitkan stimulus dengan infrastruktur IT nyata, arsitektur jaringan (LAN/WAN/Cloud), protokol, konfigurasi routing/switching, keamanan siber (cybersecurity), atau troubleshooting server.";
+  } else if (jurusan && jurusan.includes("DKV")) {
+    spesifikKonteks = "Kaitkan stimulus dengan industri kreatif, brief desain dari klien, prinsip tata letak/komposisi visual, tipografi, psikologi warna, branding, UI/UX, atau produksi multimedia.";
+  } else if (jurusan && jurusan.includes("AK")) {
+    spesifikKonteks = "Kaitkan stimulus dengan siklus akuntansi perusahaan nyata, jurnal transaksi, laporan keuangan, analisis audit, perpajakan, atau operasional perbankan.";
   } else {
-    spesifikMapel = "Gunakan literasi kritis, karya otentik, atau fenomena sosial terkini.";
+    spesifikKonteks = "Gunakan konteks kejuruan vokasi yang relevan, studi kasus dunia kerja nyata, dan pemecahan masalah otentik.";
   }
 
-  return `Mapel: ${mataPelajaran}
-Materi: ${deskripsi}
-Instruksi Tambahan: ${spesifikMapel}
+  let spesifikMapel = "";
+  if (mataPelajaran === "Informatika") {
+    spesifikMapel = "Stimulus kasus IT otentik (jaringan, IoT, AI, algoritma, analisis data).";
+  } else if (mataPelajaran === "Bahasa Inggris") {
+    spesifikMapel = "Soal WAJIB Bahasa Inggris. Uji 'implied meaning', analisis teks otentik, atau komunikasi profesional bahasa Inggris.";
+  } else if (mataPelajaran === "Matematika") {
+    spesifikMapel = "Stimulus WAJIB berupa masalah kontekstual terapan. Uji kemampuan pemodelan dan penalaran matematis, BUKAN sekadar hitungan rumus langsung.";
+  }
+
+  return `Jenjang/Tingkat: ${jenjang || 'SMK'}
+Jurusan / Konsentrasi Keahlian: ${jurusan || 'Kejuruan'}
+Mata Pelajaran: ${mataPelajaran}
+Topik/Cakupan Materi: ${deskripsi}
+Instruksi Konteks: ${spesifikKonteks} ${spesifikMapel}
 
 PERINGATAN: Buat TEPAT ${batchSize} soal ${jenisSoalType}. Tidak boleh kurang atau lebih!
+Semua butir soal WAJIB berpusat pada topik materi di atas dan menguji nalar analitis tingkat tinggi (HOTS C4, C5, atau C6), bukan sekadar mengingat (C1-C3).
 
 Hasilkan JSON dengan struktur persis seperti ini:
 {
@@ -61,9 +75,11 @@ function parseGeminiJson(raw) {
 
 const MODELS = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"];
 
-async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jenisSoal, jumlahSoal, jumlahPG, jumlahUraian }) {
+async function generateHotsQuestions({ mataPelajaran, jenjang, jurusan, judulSoal, deskripsi, jenisSoal, jumlahSoal, jumlahPG, jumlahUraian }) {
   judulSoal = String(judulSoal || "Evaluasi HOTS").trim();
   mataPelajaran = String(mataPelajaran || "Umum").trim();
+  jenjang = String(jenjang || "").trim();
+  jurusan = String(jurusan || "").trim();
   
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.includes("KODE_API_GEMINI")) {
@@ -84,7 +100,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
     }
 
     const fetchBatch = async (batchSize) => {
-      const prompt = buildUserPrompt(mataPelajaran, deskripsi, typeLabel, batchSize);
+      const prompt = buildUserPrompt(mataPelajaran, jenjang, jurusan, deskripsi, typeLabel, batchSize);
       let parsed = null;
       let lastError = null;
       let quotaExceeded = false;
@@ -171,7 +187,7 @@ async function generateHotsQuestions({ mataPelajaran, judulSoal, deskripsi, jeni
       }
     });
 
-    return { judul: judulSoal, mataPelajaran, jenisSoal, soal: semuaSoal };
+    return { judul: judulSoal, mataPelajaran, jenjang, jurusan, jenisSoal, soal: semuaSoal };
 
   } catch (error) {
     console.error("Overall generateHotsQuestions Error:", error.message || error);
