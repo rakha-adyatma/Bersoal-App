@@ -137,19 +137,13 @@ function buildPdfSoal(data) {
         doc.moveDown(1.6);
 
       } else if (sec.key === 'uraian') {
-        for (let i = 0; i < 5; i++) {
-          doc.moveDown(1.5);
-          if (doc.y > doc.page.height - doc.page.margins.bottom - 10) {
-            doc.addPage();
-          }
-          let yLine = doc.y;
-          doc.lineWidth(0.5).strokeColor('#888888')
-             .moveTo(50, yLine)
-             .lineTo(545, yLine)
-             .stroke();
+        doc.moveDown(0.8);
+        if (doc.y + 30 > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
         }
-        doc.strokeColor('#000000');
-        doc.moveDown(2);
+        doc.font(fonts.bold).fontSize(10).text('Jawaban : ', 70);
+        doc.x = 50;
+        doc.moveDown(1.5);
       }
     });
   });
