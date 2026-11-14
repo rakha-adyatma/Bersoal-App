@@ -60,13 +60,25 @@ app.post('/generate', async (req, res) => {
       return res.status(400).send("Pilih minimal satu jenis soal.");
     }
 
-    const maxTotalSoal = selectedTypes.length >= 3 ? 10 : (selectedTypes.length === 2 ? 15 : 25);
+    const maxTotalSoal = selectedTypes.length >= 3 ? 25 : (selectedTypes.length === 2 ? 30 : 35);
+    const maxPerJenis = selectedTypes.length >= 3 ? 10 : (selectedTypes.length === 2 ? 30 : 35);
+
     const jumlahPerJenis = {
       'Pilihan Ganda Standar': Number(jumlahPGStandar) || 0,
       'Pilihan Ganda Kompleks': Number(jumlahPGKompleks) || 0,
       'Benar atau Salah': Number(jumlahBenarSalah) || 0,
       'Uraian': Number(jumlahUraian) || 0
     };
+
+    // Validasi per jenis jika 3-4 jenis soal dipilih
+    if (selectedTypes.length >= 3) {
+      for (const t of selectedTypes) {
+        if ((jumlahPerJenis[t] || 0) > maxPerJenis) {
+          return res.status(400).send(`Jumlah butir untuk jenis "${t}" (${jumlahPerJenis[t]}) melebihi batas maksimal ${maxPerJenis} butir.`);
+        }
+      }
+    }
+
     const totalSoalDiminta = selectedTypes.reduce((sum, t) => sum + (jumlahPerJenis[t] || 0), 0);
     if (totalSoalDiminta > maxTotalSoal) {
       return res.status(400).send(`Jumlah total soal (${totalSoalDiminta}) melebihi batas maksimal ${maxTotalSoal} butir untuk ${selectedTypes.length} jenis soal.`);
