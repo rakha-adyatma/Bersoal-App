@@ -108,8 +108,8 @@
                                 </select>
                             </div>
 
-                            <!-- 3. PILIH MATA PELAJARAN -->
-                            <div>
+                            <!-- 3. PILIH MATA PELAJARAN (FULL WIDTH) -->
+                            <div class="md:col-span-2">
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                                     3. Mata Pelajaran
                                 </label>
@@ -117,43 +117,112 @@
                                     <option value="" disabled selected>-- Pilih Jurusan Terlebih Dahulu --</option>
                                 </select>
                             </div>
-
-                            <!-- 4. PILIH JENIS SOAL -->
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    4. Jenis / Tipe Soal
-                                </label>
-                                <select id="jenisSoal" name="jenisSoal" onchange="toggleJenisSoal()" required class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm">
-                                    <option value="" disabled selected>-- Pilih Jenis Soal --</option>
-                                    <option value="Pilihan Ganda">Pilihan Ganda</option>
-                                    <option value="Uraian">Uraian</option>
-                                    <option value="Campuran">Campuran (PG & Uraian)</option>
-                                </select>
-                            </div>
-
-                            <!-- JUMLAH SOAL (UNTUK PG ATAU URAIAN SAJA) -->
-                            <div id="jumlahSoalGroup" class="hidden md:col-span-2">
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    Jumlah Soal <span class="text-indigo-500 dark:text-indigo-400 normal-case font-semibold text-[11px] ml-0.5">(Maks. 25)</span>
-                                </label>
-                                <input type="number" id="jumlahSoal" name="jumlahSoal" min="1" max="25" placeholder="Misal: 10" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm placeholder-slate-400 dark:placeholder-slate-500">
-                            </div>
                         </div>
 
-                        <!-- JUMLAH SOAL CAMPURAN -->
-                        <div id="campuranGroup" class="hidden gap-6 bg-slate-50 dark:bg-slate-700/50 p-4 rounded-xl border border-slate-200 dark:border-slate-600 transition-colors">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Jumlah Pilihan Ganda</label>
-                                <input type="number" id="jumlahPG" name="jumlahPG" min="1" max="25" placeholder="Misal: 15" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm placeholder-slate-400 dark:placeholder-slate-500">
+                        <!-- 4. PILIH JENIS SOAL & JUMLAH SOAL (MULTI-SELECT) -->
+                        <div class="space-y-3 pt-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    4. Jenis Soal & Jumlah Soal <span class="text-indigo-600 dark:text-indigo-400 normal-case font-semibold text-[11px]">(Bisa pilih 1 atau lebih)</span>
+                                </label>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span id="badgeBatas" class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 w-fit">
+                                        Maks. 35 butir
+                                    </span>
+                                    <span id="totalInfo" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-indigo-700 dark:text-indigo-300 w-fit">
+                                        Total: 0 / 35
+                                    </span>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Jumlah Uraian</label>
-                                <input type="number" id="jumlahUraian" name="jumlahUraian" min="1" max="10" placeholder="Misal: 5" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm placeholder-slate-400 dark:placeholder-slate-500">
+
+                            <!-- Pilihan Jenis Soal Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                
+                                <!-- Card 1: Pilihan Ganda Standar -->
+                                <div id="card_pg_standar" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition-all flex flex-col justify-between">
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" id="cb_pg_standar" name="jenisSoal" value="Pilihan Ganda Standar" onchange="onJenisSoalChange()" class="mt-1 w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500 cursor-pointer">
+                                        <label for="cb_pg_standar" class="flex-1 cursor-pointer select-none">
+                                            <span class="block text-sm font-bold text-slate-800 dark:text-slate-100">Pilihan Ganda Standar</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">5 opsi (A, B, C, D, E) dengan 1 jawaban benar</span>
+                                        </label>
+                                    </div>
+                                    <div id="wrapper_qty_pg_standar" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 hidden">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Jumlah Soal PG:</span>
+                                            <input type="number" id="qty_pg_standar" name="jumlahPGStandar" min="1" max="25" placeholder="Misal: 10" class="w-28 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold focus:ring-2 focus:ring-indigo-500 text-right">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2: Pilihan Ganda Kompleks -->
+                                <div id="card_pg_kompleks" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition-all flex flex-col justify-between">
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" id="cb_pg_kompleks" name="jenisSoal" value="Pilihan Ganda Kompleks" onchange="onJenisSoalChange()" class="mt-1 w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500 cursor-pointer">
+                                        <label for="cb_pg_kompleks" class="flex-1 cursor-pointer select-none">
+                                            <span class="block text-sm font-bold text-slate-800 dark:text-slate-100">Pilihan Ganda Kompleks</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Memiliki lebih dari 1 opsi jawaban yang benar</span>
+                                        </label>
+                                    </div>
+                                    <div id="wrapper_qty_pg_kompleks" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 hidden">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Jumlah Soal Kompleks:</span>
+                                            <input type="number" id="qty_pg_kompleks" name="jumlahPGKompleks" min="1" max="25" placeholder="Misal: 5" class="w-28 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold focus:ring-2 focus:ring-indigo-500 text-right">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 3: Benar atau Salah -->
+                                <div id="card_benar_salah" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition-all flex flex-col justify-between">
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" id="cb_benar_salah" name="jenisSoal" value="Benar atau Salah" onchange="onJenisSoalChange()" class="mt-1 w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500 cursor-pointer">
+                                        <label for="cb_benar_salah" class="flex-1 cursor-pointer select-none">
+                                            <span class="block text-sm font-bold text-slate-800 dark:text-slate-100">Benar atau Salah</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Analisis pernyataan kasus dengan opsi [ B ] & [ S ]</span>
+                                        </label>
+                                    </div>
+                                    <div id="wrapper_qty_benar_salah" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 hidden">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Jumlah Soal B/S:</span>
+                                            <input type="number" id="qty_benar_salah" name="jumlahBenarSalah" min="1" max="25" placeholder="Misal: 5" class="w-28 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold focus:ring-2 focus:ring-indigo-500 text-right">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 4: Uraian -->
+                                <div id="card_uraian" class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 transition-all flex flex-col justify-between">
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" id="cb_uraian" name="jenisSoal" value="Uraian" onchange="onJenisSoalChange()" class="mt-1 w-4 h-4 text-indigo-600 rounded border-slate-300 dark:border-slate-600 focus:ring-indigo-500 cursor-pointer">
+                                        <label for="cb_uraian" class="flex-1 cursor-pointer select-none">
+                                            <span class="block text-sm font-bold text-slate-800 dark:text-slate-100">Uraian / Esai</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Esai analitis dengan garis lembar jawaban & rubrik</span>
+                                        </label>
+                                    </div>
+                                    <div id="wrapper_qty_uraian" class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 hidden">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Jumlah Soal Uraian:</span>
+                                            <input type="number" id="qty_uraian" name="jumlahUraian" min="1" max="25" placeholder="Misal: 5" class="w-28 px-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold focus:ring-2 focus:ring-indigo-500 text-right">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- Warning alert jika belum ada jenis soal yang dipilih -->
+                            <div id="jenisSoalAlert" class="hidden text-xs text-rose-500 font-semibold flex items-center gap-1.5 mt-2">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                Mohon pilih minimal satu jenis soal untuk instrumen evaluasi.
+                            </div>
+
+                            <!-- Warning alert jika total soal melebihi batas -->
+                            <div id="totalAlert" class="hidden text-xs text-rose-500 font-semibold flex items-center gap-1.5 mt-2">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <span id="totalAlertText">Jumlah total soal melebihi batas maksimal.</span>
                             </div>
                         </div>
 
                         <!-- 5. CAKUPAN MATERI PEMBELAJARAN (TEXT INPUT / TEXTAREA) -->
-                        <div>
+                        <div class="pt-2">
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                     5. Cakupan Materi Pembelajaran
@@ -163,7 +232,7 @@
                             <textarea id="materi" name="materi" rows="3" required placeholder="Tuliskan pokok bahasan atau beberapa materi yang ingin dimasukkan dalam soal...&#10;Contoh: Sistem Kelistrikan Body, Prinsip Kerja Starter, dan Analisis Kerusakan Alternator (Pisahkan dengan koma atau baris baru)" class="w-full px-4 py-3.5 text-sm rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-medium focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm placeholder-slate-400 dark:placeholder-slate-500 resize-none"></textarea>
                             <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                AI akan mengonstruksi stimulus studi kasus otentik sesuai materi dan jurusan yang dipilih.
+                                AI akan meracik stimulus studi kasus otentik sesuai materi dan jurusan yang dipilih.
                             </p>
                         </div>
                         
@@ -226,30 +295,99 @@
         if (window.innerWidth < 768) { backdrop.classList.toggle('hidden'); }
     }
 
-    function toggleJenisSoal() {
-        const jenis = document.getElementById('jenisSoal').value;
-        const groupUtama = document.getElementById('jumlahSoalGroup');
-        const groupCampuran = document.getElementById('campuranGroup');
-        const inputUtama = document.getElementById('jumlahSoal');
-        const inputPG = document.getElementById('jumlahPG');
-        const inputUraian = document.getElementById('jumlahUraian');
+    const QTY_MAP = {
+        'Pilihan Ganda Standar': 'qty_pg_standar',
+        'Pilihan Ganda Kompleks': 'qty_pg_kompleks',
+        'Benar atau Salah': 'qty_benar_salah',
+        'Uraian': 'qty_uraian'
+    };
 
-        inputUtama.removeAttribute('required');
-        inputPG.removeAttribute('required');
-        inputUraian.removeAttribute('required');
+    function getMaxTotal(checkedCount) {
+        if (checkedCount >= 3) return 25;
+        if (checkedCount === 2) return 30;
+        return 35;
+    }
 
-        if (jenis === 'Campuran') {
-            groupUtama.classList.add('hidden');
-            groupCampuran.classList.remove('hidden');
-            groupCampuran.classList.add('grid');
-            inputPG.setAttribute('required', 'true');
-            inputUraian.setAttribute('required', 'true');
-        } else if (jenis !== '') {
-            groupUtama.classList.remove('hidden');
-            groupCampuran.classList.add('hidden');
-            groupCampuran.classList.remove('grid');
-            inputUtama.setAttribute('required', 'true');
+    function getMaxPerType(checkedCount) {
+        if (checkedCount >= 3) return 10;
+        if (checkedCount === 2) return 30;
+        return 35;
+    }
+
+    function updateTotalInfo() {
+        const checkedBoxes = Array.from(document.querySelectorAll('input[name="jenisSoal"]:checked'));
+        const maxTotal = getMaxTotal(checkedBoxes.length);
+        let total = 0;
+
+        checkedBoxes.forEach(function(cb) {
+            const qtyEl = document.getElementById(QTY_MAP[cb.value]);
+            const value = qtyEl ? parseInt(qtyEl.value, 10) : 0;
+            if (!isNaN(value)) total += value;
+        });
+
+        const overLimit = total > maxTotal;
+        const info = document.getElementById('totalInfo');
+        info.textContent = 'Total: ' + total + ' / ' + maxTotal;
+        info.classList.toggle('text-rose-600', overLimit);
+        info.classList.toggle('dark:text-rose-400', overLimit);
+        info.classList.toggle('text-indigo-700', !overLimit);
+        info.classList.toggle('dark:text-indigo-300', !overLimit);
+
+        const alert = document.getElementById('totalAlert');
+        if (overLimit) {
+            document.getElementById('totalAlertText').textContent = 'Jumlah total soal (' + total + ') melebihi batas maksimal ' + maxTotal + ' butir untuk ' + checkedBoxes.length + ' jenis soal.';
+            alert.classList.remove('hidden');
+        } else {
+            alert.classList.add('hidden');
         }
+
+        return { total: total, maxTotal: maxTotal, valid: !overLimit };
+    }
+
+    function onJenisSoalChange() {
+        const checkboxes = document.querySelectorAll('input[name="jenisSoal"]');
+        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+        const maxTotal = getMaxTotal(checkedCount);
+        const maxPerType = getMaxPerType(checkedCount);
+
+        // Update badge teks
+        let badgeText = 'Maks. ' + maxTotal + ' butir';
+        if (checkedCount >= 3) {
+            badgeText = 'Maks. total ' + maxTotal + ' (Maks. ' + maxPerType + ' / jenis)';
+        } else if (checkedCount === 2) {
+            badgeText = 'Maks. total ' + maxTotal + ' butir';
+        } else {
+            badgeText = 'Maks. ' + maxTotal + ' butir';
+        }
+        document.getElementById('badgeBatas').textContent = badgeText;
+
+        // Tampilkan/sembunyikan qty inputs dan update batas max
+        const types = ['pg_standar', 'pg_kompleks', 'benar_salah', 'uraian'];
+        types.forEach(function(type) {
+            const cb = document.getElementById('cb_' + type);
+            const wrapper = document.getElementById('wrapper_qty_' + type);
+            const qty = document.getElementById('qty_' + type);
+            const card = document.getElementById('card_' + type);
+            if (cb && cb.checked) {
+                wrapper.classList.remove('hidden');
+                qty.max = maxPerType;
+                if (parseInt(qty.value) > maxPerType) qty.value = maxPerType;
+                card.classList.add('border-indigo-400', 'dark:border-indigo-600', 'bg-indigo-50/40', 'dark:bg-indigo-900/10');
+            } else {
+                if (wrapper) wrapper.classList.add('hidden');
+                if (card) card.classList.remove('border-indigo-400', 'dark:border-indigo-600', 'bg-indigo-50/40', 'dark:bg-indigo-900/10');
+            }
+        });
+
+        // Tampilkan/sembunyikan alert
+        const alert = document.getElementById('jenisSoalAlert');
+        if (checkedCount > 0) {
+            alert.classList.add('hidden');
+        } else {
+            alert.classList.remove('hidden');
+        }
+
+        updateTotalInfo();
     }
 
     const kurikulumSMK = {
@@ -424,12 +562,47 @@
         mapelEl.disabled = false;
     }
 
-    window.onload = () => {
+    window.onload = function() {
         onJenjangChange();
-        toggleJenisSoal();
+        onJenisSoalChange();
     };
 
+    Object.values(QTY_MAP).forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateTotalInfo);
+        }
+    });
+
     document.getElementById('formSoal').addEventListener('submit', function(e) {
+        // Validasi: minimal 1 jenis soal dipilih
+        const checkedBoxes = Array.from(document.querySelectorAll('input[name="jenisSoal"]:checked'));
+        if (checkedBoxes.length === 0) {
+            e.preventDefault();
+            document.getElementById('jenisSoalAlert').classList.remove('hidden');
+            document.getElementById('jenisSoalAlert').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        // Validasi: tiap tipe yang dipilih harus punya jumlah > 0
+        for (const cb of checkedBoxes) {
+            const qtyId = QTY_MAP[cb.value];
+            const qtyEl = document.getElementById(qtyId);
+            if (!qtyEl || !qtyEl.value || parseInt(qtyEl.value, 10) < 1) {
+                e.preventDefault();
+                if (qtyEl) { qtyEl.focus(); qtyEl.classList.add('ring-2', 'ring-rose-500'); }
+                return;
+            }
+        }
+
+        // Validasi: total soal tidak boleh melebihi batas berdasarkan jumlah jenis soal
+        const totalStatus = updateTotalInfo();
+        if (!totalStatus.valid) {
+            e.preventDefault();
+            document.getElementById('totalAlert').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
         if (!this.checkValidity()) return;
         document.getElementById('btnSubmit').classList.add('hidden');
         document.getElementById('loadingInfo').classList.remove('hidden');

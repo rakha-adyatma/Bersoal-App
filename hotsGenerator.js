@@ -1,7 +1,12 @@
 require('dotenv').config();
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const JENIS_VALID = ["Pilihan Ganda", "Uraian", "Campuran"];
+const JENIS_VALID = [
+  "Pilihan Ganda Standar",
+  "Pilihan Ganda Kompleks",
+  "Benar atau Salah",
+  "Uraian"
+];
 
 const SYSTEM_PROMPT = `Anda adalah Ahli Evaluasi Pendidikan tingkat SMA/SMK berparadigma Deep Learning.
 ATURAN MUTLAK:
@@ -33,28 +38,89 @@ function buildUserPrompt(mataPelajaran, jenjang, jurusan, deskripsi, jenisSoalTy
     spesifikMapel = "Stimulus WAJIB berupa masalah kontekstual terapan. Uji kemampuan pemodelan dan penalaran matematis, BUKAN sekadar hitungan rumus langsung.";
   }
 
+  let instruksiTipe = "";
+  let contohJson = "";
+
+  if (jenisSoalType === "Pilihan Ganda Standar") {
+    instruksiTipe = `Tipe Soal: PILIHAN GANDA STANDAR (Hanya 1 jawaban benar dari 5 opsi: A, B, C, D, E).
+Opsi distraktor harus logis dan mengecoh berdasarkan miskonsepsi umum.`;
+    contohJson = `{
+  "soal": [
+    {
+      "levelBloom": "C4, C5, atau C6 (contoh: 'C4 - Menganalisis')",
+      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]. DILARANG KERAS MENGKETIK OPSI JAWABAN ATAU TITIK-TITIK KOSONG DI TEKS INI!",
+      "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
+      "jawabanBenar": "A",
+      "pembahasan": "Penjelasan mengapa A benar dan opsi lain salah."
+    }
+  ]
+}`;
+  } else if (jenisSoalType === "Pilihan Ganda Kompleks") {
+    instruksiTipe = `Tipe Soal: PILIHAN GANDA KOMPLEKS (Memiliki LEBIH DARI 1 jawaban benar, minimal 2 atau 3 opsi benar dari A, B, C, D, E).
+Wajib sertakan instruksi "(Pilihlah lebih dari satu jawaban yang benar)" di teks pertanyaan.
+Kunci "jawabanBenar" berisi daftar opsi yang benar, misal: "A, C" atau "B, D, E".`;
+    contohJson = `{
+  "soal": [
+    {
+      "levelBloom": "C4, C5, atau C6 (contoh: 'C4 - Menganalisis')",
+      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]. (Pilihlah lebih dari satu jawaban yang benar)",
+      "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
+      "jawabanBenar": "A, C",
+      "pembahasan": "Penjelasan mengapa opsi A dan C benar, sedangkan opsi lainnya salah."
+    }
+  ]
+}`;
+  } else if (jenisSoalType === "Benar atau Salah") {
+    instruksiTipe = `Tipe Soal: BENAR ATAU SALAH ([ B ] / [ S ]).
+Stimulus studi kasus diikuti sebuah pernyataan analitis mendalam di mana siswa harus menentukan apakah pernyataan tersebut Benar atau Salah.
+Kunci "opsi" diisi null.
+Kunci "jawabanBenar" HANYA bernilai "B" (jika pernyataan Benar) atau "S" (jika pernyataan Salah).
+Kunci "pembahasan" wajib menjelaskan analisis lengkap mengapa pernyataan bernilai Benar/Salah.`;
+    contohJson = `{
+  "soal": [
+    {
+      "levelBloom": "C4, C5, atau C6 (contoh: 'C4 - Menganalisis')",
+      "pertanyaan": "[STIMULUS KASUS DUNIA NYATA DAN PERNYATAAN ANALITIS]",
+      "opsi": null,
+      "jawabanBenar": "B",
+      "pembahasan": "Penjelasan mendalam mengapa pernyataan tersebut bernilai Benar."
+    }
+  ]
+}`;
+  } else if (jenisSoalType === "Uraian") {
+    instruksiTipe = `Tipe Soal: URAIAN / ESAI ANALITIS TINGKAT TINGGI.
+Pertanyaan terbuka evaluatif atau pemecahan masalah (C5/C6).
+Kunci "opsi" diisi null.
+Kunci "jawabanBenar" berisi Rubrik Penilaian dan Kriteria Skor.
+Kunci "pembahasan" berisi solusi komprehensif.`;
+    contohJson = `{
+  "soal": [
+    {
+      "levelBloom": "C5, atau C6 (contoh: 'C5 - Mengevaluasi')",
+      "pertanyaan": "[STIMULUS KASUS DUNIA NYATA] \\n\\n [PERTANYAAN URAIAN TINGKAT TINGGI]",
+      "opsi": null,
+      "jawabanBenar": "Rubrik Penilaian: Skor 4 jika..., Skor 3 jika..., Skor 2 jika...",
+      "pembahasan": "Uraian pemecahan masalah dan pembahasan menyeluruh."
+    }
+  ]
+}`;
+  }
+
   return `Jenjang/Tingkat: ${jenjang || 'SMK'}
 Jurusan / Konsentrasi Keahlian: ${jurusan || 'Kejuruan'}
 Mata Pelajaran: ${mataPelajaran}
 Topik/Cakupan Materi: ${deskripsi}
 Instruksi Konteks: ${spesifikKonteks} ${spesifikMapel}
 
-PERINGATAN: Buat TEPAT ${batchSize} soal ${jenisSoalType}. Tidak boleh kurang atau lebih!
-Semua butir soal WAJIB berpusat pada topik materi di atas dan menguji nalar analitis tingkat tinggi (HOTS C4, C5, atau C6), bukan sekadar mengingat (C1-C3).
+${instruksiTipe}
 
-Hasilkan JSON dengan struktur persis seperti ini:
-{
-  "soal": [
-    {
-      "levelBloom": "C4, C5, atau C6 (PILIH SALAH SATU SAJA, contoh: 'C4 - Menganalisis')",
-      "pertanyaan": "[STIMULUS NYATA] \\n\\n [PERTANYAAN NALAR]. DILARANG KERAS MENGKETIK OPSI JAWABAN ATAU TITIK-TITIK KOSONG (....) DI TEKS INI!",
-      "opsi": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
-      "jawabanBenar": "A",
-      "pembahasan": "..."
-    }
-  ]
-}
-Catatan Penting: Jika jenis soal "Uraian", biarkan kunci "opsi" berupa string kosong (""), dan berikan rubrik di "jawabanBenar".`;
+PERINGATAN SANGAT PENTING:
+- Buat TEPAT ${batchSize} butir soal ${jenisSoalType}. Tidak boleh kurang dan tidak boleh lebih!
+- Semua butir soal WAJIB berpusat pada materi di atas dan menguji nalar HOTS (C4, C5, C6).
+- Format HANYA JSON murni tanpa markdown!
+
+Struktur JSON:
+${contohJson}`;
 }
 
 function repairJsonBackslashes(text) {
@@ -75,7 +141,21 @@ function parseGeminiJson(raw) {
 
 const MODELS = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"];
 
-async function generateHotsQuestions({ mataPelajaran, jenjang, jurusan, judulSoal, deskripsi, jenisSoal, jumlahSoal, jumlahPG, jumlahUraian }) {
+async function generateHotsQuestions({
+  mataPelajaran,
+  jenjang,
+  jurusan,
+  judulSoal,
+  deskripsi,
+  selectedTypes = [],
+  jumlahPGStandar = 0,
+  jumlahPGKompleks = 0,
+  jumlahBenarSalah = 0,
+  jumlahUraian = 0,
+  jenisSoal,
+  jumlahSoal,
+  jumlahPG
+}) {
   judulSoal = String(judulSoal || "Evaluasi HOTS").trim();
   mataPelajaran = String(mataPelajaran || "Umum").trim();
   jenjang = String(jenjang || "").trim();
@@ -157,37 +237,77 @@ async function generateHotsQuestions({ mataPelajaran, jenjang, jurusan, judulSoa
   };
 
   try {
-    let semuaSoal = [];
-    
-    if (jenisSoal === "Campuran") {
-       const pgData = await generateSpecificType("Pilihan Ganda", Number(jumlahPG));
-       const uraianData = await generateSpecificType("Uraian", Number(jumlahUraian));
-       semuaSoal = [...pgData, ...uraianData];
-    } else {
-       semuaSoal = await generateSpecificType(jenisSoal, Number(jumlahSoal));
+    let requests = [];
+
+    if (Array.isArray(selectedTypes) && selectedTypes.length > 0) {
+      if (selectedTypes.includes("Pilihan Ganda Standar") && Number(jumlahPGStandar) > 0) {
+        requests.push({ type: "Pilihan Ganda Standar", count: Number(jumlahPGStandar) });
+      }
+      if (selectedTypes.includes("Pilihan Ganda Kompleks") && Number(jumlahPGKompleks) > 0) {
+        requests.push({ type: "Pilihan Ganda Kompleks", count: Number(jumlahPGKompleks) });
+      }
+      if (selectedTypes.includes("Benar atau Salah") && Number(jumlahBenarSalah) > 0) {
+        requests.push({ type: "Benar atau Salah", count: Number(jumlahBenarSalah) });
+      }
+      if (selectedTypes.includes("Uraian") && Number(jumlahUraian) > 0) {
+        requests.push({ type: "Uraian", count: Number(jumlahUraian) });
+      }
     }
 
-    let noPG = 1;
+    // Fallback legacy jika jenisSoal tunggal
+    if (requests.length === 0) {
+      if (jenisSoal === "Campuran") {
+        requests.push({ type: "Pilihan Ganda Standar", count: Number(jumlahPG) || 5 });
+        requests.push({ type: "Uraian", count: Number(jumlahUraian) || 5 });
+      } else if (jenisSoal === "Uraian") {
+        requests.push({ type: "Uraian", count: Number(jumlahSoal) || 5 });
+      } else {
+        requests.push({ type: "Pilihan Ganda Standar", count: Number(jumlahSoal) || 5 });
+      }
+    }
+
+    // Eksekusi paralel pembuatan butir soal
+    const results = await Promise.all(requests.map(r => generateSpecificType(r.type, r.count)));
+    let semuaSoal = [];
+    results.forEach(arr => {
+      semuaSoal = semuaSoal.concat(arr);
+    });
+
+    let noPGStandar = 1;
+    let noPGKompleks = 1;
+    let noBenarSalah = 1;
     let noUraian = 1;
 
     semuaSoal.forEach((item) => {
       if (!item.levelBloom || item.levelBloom.includes("C4/C5/C6")) {
-          item.levelBloom = "C4 - Analisis"; 
+        item.levelBloom = "C4 - Analisis"; 
       }
 
-      let isUraian = item.tipeSpesifik === "Uraian";
-      if (!item.tipeSpesifik) isUraian = jenisSoal === "Uraian";
-
-      if (isUraian) {
-          item.nomor = noUraian++;
-          item.isUraian = true;
-      } else {
-          item.nomor = noPG++;
-          item.isUraian = false;
+      if (item.tipeSpesifik === "Pilihan Ganda Standar") {
+        item.nomor = noPGStandar++;
+        item.isUraian = false;
+      } else if (item.tipeSpesifik === "Pilihan Ganda Kompleks") {
+        item.nomor = noPGKompleks++;
+        item.isUraian = false;
+      } else if (item.tipeSpesifik === "Benar atau Salah") {
+        item.nomor = noBenarSalah++;
+        item.isUraian = false;
+      } else if (item.tipeSpesifik === "Uraian") {
+        item.nomor = noUraian++;
+        item.isUraian = true;
       }
     });
 
-    return { judul: judulSoal, mataPelajaran, jenjang, jurusan, jenisSoal, soal: semuaSoal };
+    const activeTypes = requests.map(r => r.type);
+    return {
+      judul: judulSoal,
+      mataPelajaran,
+      jenjang,
+      jurusan,
+      jenisSoal: activeTypes.join(', '),
+      selectedTypes: activeTypes,
+      soal: semuaSoal
+    };
 
   } catch (error) {
     console.error("Overall generateHotsQuestions Error:", error.message || error);

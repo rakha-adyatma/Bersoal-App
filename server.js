@@ -35,10 +35,41 @@ function decodeDataToken(token) {
 
 app.post('/generate', async (req, res) => {
   try {
-    const { mataPelajaran, jenjang, jurusan, jenisSoal, materi, jumlahSoal, jumlahPG, jumlahUraian } = req.body;
+    const {
+      mataPelajaran,
+      jenjang,
+      jurusan,
+      jenisSoal,
+      jumlahPGStandar,
+      jumlahPGKompleks,
+      jumlahBenarSalah,
+      jumlahUraian,
+      materi,
+      jumlahSoal,
+      jumlahPG
+    } = req.body;
 
-    if (!JENIS_VALID.includes(jenisSoal)) {
-      return res.status(400).send("Jenis soal tidak valid.");
+    let selectedTypes = [];
+    if (Array.isArray(jenisSoal)) {
+      selectedTypes = jenisSoal;
+    } else if (typeof jenisSoal === 'string' && jenisSoal.trim()) {
+      selectedTypes = [jenisSoal.trim()];
+    }
+
+    if (selectedTypes.length === 0) {
+      return res.status(400).send("Pilih minimal satu jenis soal.");
+    }
+
+    const maxTotalSoal = selectedTypes.length >= 3 ? 10 : (selectedTypes.length === 2 ? 15 : 25);
+    const jumlahPerJenis = {
+      'Pilihan Ganda Standar': Number(jumlahPGStandar) || 0,
+      'Pilihan Ganda Kompleks': Number(jumlahPGKompleks) || 0,
+      'Benar atau Salah': Number(jumlahBenarSalah) || 0,
+      'Uraian': Number(jumlahUraian) || 0
+    };
+    const totalSoalDiminta = selectedTypes.reduce((sum, t) => sum + (jumlahPerJenis[t] || 0), 0);
+    if (totalSoalDiminta > maxTotalSoal) {
+      return res.status(400).send(`Jumlah total soal (${totalSoalDiminta}) melebihi batas maksimal ${maxTotalSoal} butir untuk ${selectedTypes.length} jenis soal.`);
     }
 
     const jurusanInfo = jurusan ? ` - ${jurusan}` : '';
@@ -50,15 +81,21 @@ app.post('/generate', async (req, res) => {
       jurusan,
       judulSoal,
       deskripsi: deskripsiMateri,
-      jenisSoal,
+      selectedTypes,
+      jumlahPGStandar: Number(jumlahPGStandar) || 0,
+      jumlahPGKompleks: Number(jumlahPGKompleks) || 0,
+      jumlahBenarSalah: Number(jumlahBenarSalah) || 0,
+      jumlahUraian: Number(jumlahUraian) || 0,
+      jenisSoal: selectedTypes.join(', '),
       jumlahSoal,
-      jumlahPG,
-      jumlahUraian
+      jumlahPG
     });
     const timestamp = Date.now();
     generatedDataStore[timestamp] = hotsData;
     const token = encodeDataToken(hotsData);
     const queryParam = token ? `?token=${encodeURIComponent(token)}` : '';
+
+    const typesBadgeHtml = (hotsData.selectedTypes || []).map(t => `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">${t}</span>`).join(' ');
 
     const successHtml = `
     <!DOCTYPE html>
@@ -107,7 +144,10 @@ app.post('/generate', async (req, res) => {
                     </div>
                     <h2 class="text-2xl font-bold text-slate-800 mb-2">Penyusunan Sukses!</h2>
                     <p class="text-slate-500 mb-2 text-sm">Instrumen evaluasi <strong>${mataPelajaran}</strong> telah berhasil diracik dan disesuaikan dengan standar HOTS.</p>
-                    <p class="text-xs text-indigo-600 font-semibold mb-6">${jenjang}${jurusan ? ' &bull; ' + jurusan : ''}</p>
+                    <p class="text-xs text-indigo-600 font-semibold mb-3">${jenjang}${jurusan ? ' &bull; ' + jurusan : ''}</p>
+                    <div class="flex flex-wrap items-center justify-center gap-1.5 mb-6">
+                        ${typesBadgeHtml}
+                    </div>
                     
                     <div class="flex flex-col sm:flex-row gap-4 justify-center">
                         <a href="/download/soal/${timestamp}${queryParam}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-6 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">

@@ -56,80 +56,103 @@ function buildPdfSoal(data) {
 
   cetakHeader(doc, data, fonts, false);
 
-  const soalPG = data.soal.filter(s => !s.isUraian);
-  const soalUraian = data.soal.filter(s => s.isUraian);
+  const soalPGStandar = data.soal.filter(s => s.tipeSpesifik === 'Pilihan Ganda Standar' || (!s.tipeSpesifik && !s.isUraian));
+  const soalPGKompleks = data.soal.filter(s => s.tipeSpesifik === 'Pilihan Ganda Kompleks');
+  const soalBenarSalah = data.soal.filter(s => s.tipeSpesifik === 'Benar atau Salah');
+  const soalUraian = data.soal.filter(s => s.tipeSpesifik === 'Uraian' || (!s.tipeSpesifik && s.isUraian));
 
-  // ===================== BAGIAN A: PILIHAN GANDA =====================
-  if (soalPG.length > 0) {
-    if (data.jenisSoal === 'Campuran') {
-       doc.font(fonts.bold).fontSize(11).text('A. PILIHAN GANDA');
-       doc.moveDown(0.5);
-    }
-    soalPG.forEach(item => {
-       let teksPertanyaan = cleanPertanyaan(item.pertanyaan);
-       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
-       doc.font(fonts.normal).text(teksPertanyaan, { align: 'justify' });
-       doc.moveDown(0.5);
-       
-       if (item.opsi && typeof item.opsi === 'object') {
-         ['A', 'B', 'C', 'D', 'E'].forEach(opt => {
-           if (item.opsi[opt]) {
-             let teksOpsi = item.opsi[opt].replace(/^[A-E][\.\)]\s*/i, '').trim();
-             
-             // PERLINDUNGAN HALAMAN: Cek apakah teks opsi ini akan menabrak bawah halaman
-             let textHeight = doc.heightOfString(teksOpsi, { width: 459, align: 'justify' });
-             if (doc.y + textHeight + 10 > doc.page.height - doc.page.margins.bottom) {
-                 doc.addPage(); // Jika tidak muat, paksa pindah halaman DULU sebelum dicetak
-             }
-             
-             // HANGING INDENT: A. di kiri, teks menjolok rapi di kanan
-             let currentY = doc.y;
-             doc.text(`${opt}.`, 50, currentY);
-             doc.text(teksOpsi, 68, currentY, { align: 'justify', width: 459 });
-             doc.x = 50; // Kembalikan posisi x ke awal
-           }
-         });
-       }
-       doc.moveDown(1.5);
-    });
-  }
+  const sections = [];
+  if (soalPGStandar.length > 0) sections.push({ key: 'pgStandar', title: 'PILIHAN GANDA STANDAR', items: soalPGStandar });
+  if (soalPGKompleks.length > 0) sections.push({ key: 'pgKompleks', title: 'PILIHAN GANDA KOMPLEKS (LEBIH DARI 1 JAWABAN BENAR)', items: soalPGKompleks });
+  if (soalBenarSalah.length > 0) sections.push({ key: 'benarSalah', title: 'BENAR ATAU SALAH ([ B ] / [ S ])', items: soalBenarSalah });
+  if (soalUraian.length > 0) sections.push({ key: 'uraian', title: 'URAIAN / ESAI', items: soalUraian });
 
-  // ===================== BAGIAN B: URAIAN =====================
-  if (soalUraian.length > 0) {
-    if (soalPG.length > 0) doc.addPage(); 
-    
-    if (data.jenisSoal === 'Campuran') {
-       doc.font(fonts.bold).fontSize(11).text('B. URAIAN');
-       doc.moveDown(0.5);
+  const abjad = ['A', 'B', 'C', 'D'];
+
+  sections.forEach((sec, sIdx) => {
+    if (sIdx > 0) {
+      doc.addPage();
     }
-    soalUraian.forEach(item => {
-       let teksPertanyaan = cleanPertanyaan(item.pertanyaan);
-       
-       // PERLINDUNGAN HALAMAN URAIAN
-       let qHeight = doc.heightOfString(teksPertanyaan, { align: 'justify' });
-       if (doc.y + qHeight + 40 > doc.page.height - doc.page.margins.bottom) {
-           doc.addPage();
-       }
-       
-       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
-       doc.font(fonts.normal).text(teksPertanyaan, { align: 'justify' });
-       
-       // CETAK 5 GARIS JAWABAN (Menggunakan Vektor Solid Abu-abu Rapi, bukan ketikan titik)
-       for (let i = 0; i < 5; i++) {
+
+    const heading = sections.length > 1 ? `BAGIAN ${abjad[sIdx]}: ${sec.title}` : sec.title;
+    doc.font(fonts.bold).fontSize(11).text(heading);
+    doc.moveDown(0.7);
+
+    sec.items.forEach(item => {
+      let teksPertanyaan = cleanPertanyaan(item.pertanyaan);
+
+      // Cek proteksi awal soal
+      let estHeight = doc.heightOfString(teksPertanyaan, { width: 495, align: 'justify' }) + 40;
+      if (doc.y + estHeight > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+      }
+
+      doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
+      doc.font(fonts.normal).text(teksPertanyaan, { align: 'justify' });
+      doc.moveDown(0.4);
+
+      if (sec.key === 'pgStandar') {
+        if (item.opsi && typeof item.opsi === 'object') {
+          ['A', 'B', 'C', 'D', 'E'].forEach(opt => {
+            if (item.opsi[opt]) {
+              let teksOpsi = item.opsi[opt].replace(/^[A-E][\.\)]\s*/i, '').trim();
+              let textHeight = doc.heightOfString(teksOpsi, { width: 459, align: 'justify' });
+              if (doc.y + textHeight + 10 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+              }
+              let currentY = doc.y;
+              doc.text(`${opt}.`, 50, currentY);
+              doc.text(teksOpsi, 68, currentY, { align: 'justify', width: 459 });
+              doc.x = 50;
+            }
+          });
+        }
+        doc.moveDown(1.5);
+
+      } else if (sec.key === 'pgKompleks') {
+        if (item.opsi && typeof item.opsi === 'object') {
+          ['A', 'B', 'C', 'D', 'E'].forEach(opt => {
+            if (item.opsi[opt]) {
+              let teksOpsi = item.opsi[opt].replace(/^[A-E][\.\)]\s*/i, '').trim();
+              let textHeight = doc.heightOfString(teksOpsi, { width: 445, align: 'justify' });
+              if (doc.y + textHeight + 10 > doc.page.height - doc.page.margins.bottom) {
+                doc.addPage();
+              }
+              let currentY = doc.y;
+              doc.text(`[  ] ${opt}.`, 50, currentY);
+              doc.text(teksOpsi, 82, currentY, { align: 'justify', width: 445 });
+              doc.x = 50;
+            }
+          });
+        }
+        doc.moveDown(1.5);
+
+      } else if (sec.key === 'benarSalah') {
+        if (doc.y + 35 > doc.page.height - doc.page.margins.bottom) {
+          doc.addPage();
+        }
+        let currentY = doc.y + 2;
+        doc.font(fonts.bold).fontSize(10).text('[ B ]       [ S ]', 70, currentY);
+        doc.x = 50;
+        doc.moveDown(1.6);
+
+      } else if (sec.key === 'uraian') {
+        for (let i = 0; i < 5; i++) {
           doc.moveDown(1.5);
           if (doc.y > doc.page.height - doc.page.margins.bottom - 10) {
-              doc.addPage(); // Cek lagi jangan sampai garis keluar halaman
+            doc.addPage();
           }
           let yLine = doc.y;
           doc.lineWidth(0.5).strokeColor('#888888')
              .moveTo(50, yLine)
              .lineTo(545, yLine)
              .stroke();
-       }
-       doc.strokeColor('#000000'); // Kembalikan tinta ke hitam
-       doc.moveDown(2);
+        }
+        doc.strokeColor('#000000');
+        doc.moveDown(2);
+      }
     });
-  }
+  });
 
   return doc;
 }
@@ -140,37 +163,57 @@ function buildPdfKunci(data) {
 
   cetakHeader(doc, data, fonts, true);
 
-  const soalPG = data.soal.filter(s => !s.isUraian);
-  const soalUraian = data.soal.filter(s => s.isUraian);
+  const soalPGStandar = data.soal.filter(s => s.tipeSpesifik === 'Pilihan Ganda Standar' || (!s.tipeSpesifik && !s.isUraian));
+  const soalPGKompleks = data.soal.filter(s => s.tipeSpesifik === 'Pilihan Ganda Kompleks');
+  const soalBenarSalah = data.soal.filter(s => s.tipeSpesifik === 'Benar atau Salah');
+  const soalUraian = data.soal.filter(s => s.tipeSpesifik === 'Uraian' || (!s.tipeSpesifik && s.isUraian));
 
-  if (soalPG.length > 0) {
-    if (data.jenisSoal === 'Campuran') {
-       doc.font(fonts.bold).fontSize(11).text('A. PILIHAN GANDA');
-       doc.moveDown(0.5);
-    }
-    soalPG.forEach(item => {
-       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
-       doc.text(`Jawaban: ${item.jawabanBenar}`);
-       doc.font(fonts.normal).text(`Pembahasan: ${item.pembahasan}`, { align: 'justify' });
-       doc.moveDown(1.5);
-    });
-  }
+  const sections = [];
+  if (soalPGStandar.length > 0) sections.push({ key: 'pgStandar', title: 'PILIHAN GANDA STANDAR', items: soalPGStandar });
+  if (soalPGKompleks.length > 0) sections.push({ key: 'pgKompleks', title: 'PILIHAN GANDA KOMPLEKS', items: soalPGKompleks });
+  if (soalBenarSalah.length > 0) sections.push({ key: 'benarSalah', title: 'BENAR ATAU SALAH', items: soalBenarSalah });
+  if (soalUraian.length > 0) sections.push({ key: 'uraian', title: 'URAIAN / ESAI', items: soalUraian });
 
-  if (soalUraian.length > 0) {
-    if (soalPG.length > 0) doc.addPage();
-    if (data.jenisSoal === 'Campuran') {
-       doc.font(fonts.bold).fontSize(11).text('B. URAIAN');
-       doc.moveDown(0.5);
+  const abjad = ['A', 'B', 'C', 'D'];
+
+  sections.forEach((sec, sIdx) => {
+    if (sIdx > 0) {
+      doc.addPage();
     }
-    soalUraian.forEach(item => {
-       doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
-       doc.text(`Rubrik Penilaian:`);
-       doc.font(fonts.normal).text(item.jawabanBenar, { align: 'justify' });
-       doc.moveDown(0.5);
-       doc.text(`Pembahasan Tambahan: ${item.pembahasan}`, { align: 'justify' });
-       doc.moveDown(1.5);
+
+    const heading = sections.length > 1 ? `BAGIAN ${abjad[sIdx]}: ${sec.title}` : sec.title;
+    doc.font(fonts.bold).fontSize(11).text(heading);
+    doc.moveDown(0.7);
+
+    sec.items.forEach(item => {
+      let estHeight = 70;
+      if (doc.y + estHeight > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+      }
+
+      doc.font(fonts.bold).fontSize(10).text(`No. ${item.nomor}  |  Level: ${item.levelBloom}`);
+
+      if (sec.key === 'pgStandar') {
+        doc.text(`Jawaban: ${item.jawabanBenar}`);
+        doc.font(fonts.normal).text(`Pembahasan: ${item.pembahasan}`, { align: 'justify' });
+      } else if (sec.key === 'pgKompleks') {
+        doc.text(`Kunci Jawaban: ${item.jawabanBenar}`);
+        doc.font(fonts.normal).text(`Pembahasan: ${item.pembahasan}`, { align: 'justify' });
+      } else if (sec.key === 'benarSalah') {
+        const isB = String(item.jawabanBenar || '').toUpperCase().includes('B');
+        doc.text(`Kunci Jawaban: ${isB ? 'BENAR [ B ]' : 'SALAH [ S ]'}`);
+        doc.font(fonts.normal).text(`Pembahasan: ${item.pembahasan}`, { align: 'justify' });
+      } else if (sec.key === 'uraian') {
+        doc.text(`Rubrik Penilaian:`);
+        doc.font(fonts.normal).text(item.jawabanBenar, { align: 'justify' });
+        doc.moveDown(0.5);
+        doc.font(fonts.bold).text(`Pembahasan Solusi:`);
+        doc.font(fonts.normal).text(item.pembahasan, { align: 'justify' });
+      }
+
+      doc.moveDown(1.5);
     });
-  }
+  });
 
   return doc;
 }
