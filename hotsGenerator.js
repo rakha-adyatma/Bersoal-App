@@ -141,6 +141,38 @@ function parseGeminiJson(raw) {
 
 const MODELS = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-2.5-flash-lite"];
 
+async function callVikeyApi(prompt, modelName, apiKey) {
+  const payload = JSON.stringify({
+    model: modelName || "anthropic/haiku-5.5",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.7
+  });
+
+  const response = await fetch("https://api.vikey.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: payload
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Vikey API Error (${response.status}): ${errorText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!content) {
+    throw new Error("Respons kosong dari Vikey API");
+  }
+  return content;
+}
+
 async function generateHotsQuestions({
   mataPelajaran,
   jenjang,
@@ -161,12 +193,22 @@ async function generateHotsQuestions({
   jenjang = String(jenjang || "").trim();
   jurusan = String(jurusan || "").trim();
   
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey.includes("KODE_API_GEMINI")) {
-    throw new Error("GEMINI_API_KEY belum diatur atau tidak valid di file .env / Vercel Environment Variables. Silakan dapatkan API Key di https://aistudio.google.com/app/apikey");
+  const provider = (process.env.AI_PROVIDER || 'gemini').toLowerCase();
+  const vikeyApiKey = process.env.VIKEY_API_KEY;
+  const vikeyModel = process.env.VIKEY_MODEL || "anthropic/haiku-5.5";
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+
+  if (provider === 'vikey') {
+    if (!vikeyApiKey) {
+      throw new Error("VIKEY_API_KEY belum diatur di file .env / Vercel Environment Variables.");
+    }
+  } else {
+    if (!geminiApiKey || geminiApiKey.includes("KODE_API_GEMINI")) {
+      throw new Error("GEMINI_API_KEY belum diatur atau tidak valid di file .env / Vercel Environment Variables. Silakan dapatkan API Key di https://aistudio.google.com/app/apikey");
+    }
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = (provider !== 'vikey' && geminiApiKey) ? new GoogleGenerativeAI(geminiApiKey) : null;
   const MAX_PER_BATCH = 8;
 
   const generateSpecificType = async (typeLabel, totalRequired) => {
@@ -183,36 +225,54 @@ async function generateHotsQuestions({
       const prompt = buildUserPrompt(mataPelajaran, jenjang, jurusan, deskripsi, typeLabel, batchSize);
       let parsed = null;
       let lastError = null;
-      let quotaExceeded = false;
-      let invalidKey = false;
 
-      outer: for (const name of MODELS) {
-        const modelOptions = {
-          model: name,
-          systemInstruction: SYSTEM_PROMPT,
-          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 }
-        };
+      if (provider === 'vikey') {
+        try {
+          const rawText = await callVikeyApi(prompt, vikeyModel, vikeyApiKey);
+          parsed = parseGeminiJson(rawText);
+        } catch (e) {
+          lastError = e.message || String(e);
+          console.error(`Error pemanggilan Vikey (${vikeyModel}):`, lastError);
+        }
+      } else {
+        let quotaExceeded = false;
+        let invalidKey = false;
 
-        if (apiKey.startsWith("AQ.")) {
-          modelOptions.requestOptions = { customHeaders: { 'x-goog-api-key': apiKey } };
+        outer: for (const name of MODELS) {
+          const modelOptions = {
+            model: name,
+            systemInstruction: SYSTEM_PROMPT,
+            generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192, temperature: 0.7 }
+          };
+
+          if (geminiApiKey && geminiApiKey.startsWith("AQ.")) {
+            modelOptions.requestOptions = { customHeaders: { 'x-goog-api-key': geminiApiKey } };
+          }
+
+          const model = genAI.getGenerativeModel(modelOptions);
+
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              const result = await model.generateContent(prompt);
+              parsed = parseGeminiJson(result.response.text());
+              if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) break outer;
+              parsed = null;
+            } catch (e) {
+              const errMsg = e.message || String(e);
+              console.error(`Error dengan model ${name} (percobaan ${attempt + 1}):`, errMsg);
+              lastError = errMsg;
+              if (errMsg.includes("Quota exceeded") || errMsg.includes("429")) quotaExceeded = true;
+              if (errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) invalidKey = true;
+              parsed = null;
+            }
+          }
         }
 
-        const model = genAI.getGenerativeModel(modelOptions);
-
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            const result = await model.generateContent(prompt);
-            parsed = parseGeminiJson(result.response.text());
-            if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) break outer;
-            parsed = null;
-          } catch (e) {
-            const errMsg = e.message || String(e);
-            console.error(`Error dengan model ${name} (percobaan ${attempt + 1}):`, errMsg);
-            lastError = errMsg;
-            if (errMsg.includes("Quota exceeded") || errMsg.includes("429")) quotaExceeded = true;
-            if (errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) invalidKey = true;
-            parsed = null;
-          }
+        if ((!parsed || !parsed.soal) && quotaExceeded) {
+          throw new Error("Batas kuota gratis Gemini API terlampaui. Silakan tunggu 20 detik dan coba lagi.");
+        }
+        if ((!parsed || !parsed.soal) && invalidKey) {
+          throw new Error("API Key Gemini tidak valid. Silakan periksa GEMINI_API_KEY.");
         }
       }
 
