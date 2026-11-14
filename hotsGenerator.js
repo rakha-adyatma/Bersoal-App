@@ -148,6 +148,7 @@ async function callVikeyApi(prompt, modelName, apiKey) {
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: prompt }
     ],
+    max_tokens: 8192,
     temperature: 0.7
   });
 
@@ -209,7 +210,7 @@ async function generateHotsQuestions({
   }
 
   const genAI = (provider !== 'vikey' && geminiApiKey) ? new GoogleGenerativeAI(geminiApiKey) : null;
-  const MAX_PER_BATCH = 8;
+  const MAX_PER_BATCH = 3;
 
   const generateSpecificType = async (typeLabel, totalRequired) => {
     if (totalRequired <= 0) return [];
