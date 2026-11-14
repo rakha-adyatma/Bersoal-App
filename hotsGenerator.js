@@ -277,12 +277,6 @@ async function generateHotsQuestions({
       }
 
       if (!parsed || !parsed.soal) {
-        if (invalidKey) {
-          throw new Error("API Key Gemini tidak valid. Silakan periksa GEMINI_API_KEY di .env atau Vercel Environment Variables.");
-        }
-        if (quotaExceeded) {
-          throw new Error("Batas kuota gratis Gemini API terlampaui (Rate Limit / Quota Exceeded). Silakan tunggu 20 detik dan coba lagi.");
-        }
         throw new Error(`Gagal memproses soal ${typeLabel}: ${lastError || 'Tidak ada respons dari AI'}`);
       }
       
