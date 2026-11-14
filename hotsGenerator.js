@@ -127,15 +127,48 @@ function repairJsonBackslashes(text) {
   return text.replace(/\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g, "\\\\");
 }
 
+function tryRepairMalformedJson(text) {
+  // 1. Ekstrak blok JSON jika model memberikan teks pembuka / penutup
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    text = text.substring(firstBrace, lastBrace + 1);
+  }
+
+  // 2. Bersihkan trailing commas: misal `{"a": 1,}` atau `[1, 2,]`
+  text = text.replace(/,\s*([}\]])/g, '$1');
+
+  // 3. Perbaiki unescaped newlines/tabs di dalam string JSON
+  // (misal stimulus punya enter nyata yang bukan \n)
+  text = text.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/gs, (match) => {
+    return match.replace(/\r?\n/g, "\\n").replace(/\t/g, "\\t");
+  });
+
+  return text;
+}
+
 function parseGeminiJson(raw) {
   let text = String(raw || "").trim();
   if (text.startsWith("```")) {
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
   }
+
+  // Percobaan 1: Direct JSON.parse
   try {
     return JSON.parse(text);
-  } catch (e) {
-    return JSON.parse(repairJsonBackslashes(text));
+  } catch (e1) {
+    // Percobaan 2: Repair backslashes
+    try {
+      return JSON.parse(repairJsonBackslashes(text));
+    } catch (e2) {
+      // Percobaan 3: Deep repair (trailing comma, unescaped newlines, boundaries)
+      try {
+        const repaired = tryRepairMalformedJson(repairJsonBackslashes(text));
+        return JSON.parse(repaired);
+      } catch (e3) {
+        throw e1; // lempar error awal jika semua usaha perbaikan gagal
+      }
+    }
   }
 }
 
@@ -228,12 +261,17 @@ async function generateHotsQuestions({
       let lastError = null;
 
       if (provider === 'vikey') {
-        try {
-          const rawText = await callVikeyApi(prompt, vikeyModel, vikeyApiKey);
-          parsed = parseGeminiJson(rawText);
-        } catch (e) {
-          lastError = e.message || String(e);
-          console.error(`Error pemanggilan Vikey (${vikeyModel}):`, lastError);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const rawText = await callVikeyApi(prompt, vikeyModel, vikeyApiKey);
+            parsed = parseGeminiJson(rawText);
+            if (parsed && Array.isArray(parsed.soal) && parsed.soal.length > 0) break;
+            parsed = null;
+          } catch (e) {
+            lastError = e.message || String(e);
+            console.error(`Error pemanggilan Vikey (${vikeyModel}) percobaan ${attempt + 1}:`, lastError);
+            parsed = null;
+          }
         }
       } else {
         let quotaExceeded = false;
