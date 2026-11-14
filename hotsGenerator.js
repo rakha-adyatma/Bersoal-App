@@ -243,7 +243,8 @@ async function generateHotsQuestions({
   }
 
   const genAI = (provider !== 'vikey' && geminiApiKey) ? new GoogleGenerativeAI(geminiApiKey) : null;
-  const MAX_PER_BATCH = 3;
+  // Untuk Gemini free-tier, batch 6-8 sangat efisien dan meminimalkan jumlah request agar tidak kena rate-limit (RPM)
+  const MAX_PER_BATCH = provider === 'vikey' ? 3 : 8;
 
   const generateSpecificType = async (typeLabel, totalRequired) => {
     if (totalRequired <= 0) return [];
